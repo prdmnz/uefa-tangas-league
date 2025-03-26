@@ -8,6 +8,7 @@ import PlayerList from '../components/PlayerList';
 import TeamView from '../components/TeamView';
 import RandomizerButton from '../components/RandomizerButton';
 import Navigation from '../components/Navigation';
+import CsvUploader from '../components/CsvUploader';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -20,6 +21,20 @@ const Index = () => {
     currentPick: 0,
     status: DraftStatus.NOT_STARTED
   });
+
+  // State for showing/hiding CSV uploader
+  const [showCsvUploader, setShowCsvUploader] = useState(false);
+
+  // Handle CSV players loaded
+  const handlePlayersLoaded = (players: Player[]) => {
+    setDraftState(prev => ({
+      ...prev,
+      availablePlayers: players,
+    }));
+    
+    // Hide the uploader after successful import
+    setShowCsvUploader(false);
+  };
 
   // Handle timer completion
   const handleTimerComplete = () => {
@@ -171,7 +186,7 @@ const Index = () => {
                   This draft uses a snake format with 9 teams. Before starting, you need to randomize the draft order.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
                   <RandomizerButton
                     teams={draftState.teams}
                     onRandomize={handleRandomize}
@@ -185,6 +200,25 @@ const Index = () => {
                     Start Draft
                   </button>
                 </div>
+                
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => setShowCsvUploader(!showCsvUploader)}
+                    className="text-blue-600 hover:text-blue-800 underline text-sm"
+                  >
+                    {showCsvUploader ? 'Esconder Upload CSV' : 'Importar Jogadores (CSV)'}
+                  </button>
+                  
+                  <div className="text-xs text-gray-500">
+                    {draftState.availablePlayers.length} jogadores disponíveis
+                  </div>
+                </div>
+                
+                {showCsvUploader && (
+                  <div className="mt-4">
+                    <CsvUploader onPlayersLoaded={handlePlayersLoaded} />
+                  </div>
+                )}
               </div>
             )}
             
