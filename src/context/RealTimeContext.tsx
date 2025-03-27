@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useReducer, useState } from 'react';
 import { websocketService, WebSocketEvent } from '../services/websocketService';
 import { DraftState, Team, Player, DraftStatus, RealTimeState } from '../types';
@@ -225,7 +224,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           pickInRound: pick.pick_in_round,
           team,
           player,
-          timeStamp: pick.timestamp
+          timeStamp: pick.timestamp ? new Date(pick.timestamp) : undefined
         };
       });
 
