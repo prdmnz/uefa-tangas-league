@@ -12,48 +12,49 @@ import CsvUploader from '../components/CsvUploader';
 import TeamSelection from '../components/TeamSelection';
 import Timer from '../components/Timer';
 import { toast } from '@/hooks/use-toast';
+import { useRealTime } from '../context/RealTimeContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const Index = () => {
-  // Define team names
-  const teamNames = [
-    "Travinha", "Munhoz", "Lucas", "Luan", "João", "Rafael", "Murillo", "Vi", "Teló"
-  ];
+  // Use o contexto de tempo real
+  const { 
+    userId, 
+    draftState, 
+    connectUser, 
+    selectTeam, 
+    startDraft: startDraftRealTime, 
+    makePick: makePickRealTime,
+    resetDraft: resetDraftRealTime,
+    pauseDraft: pauseDraftRealTime,
+    resumeDraft: resumeDraftRealTime
+  } = useRealTime();
   
-  // Initialize draft state
-  const [draftState, setDraftState] = useState<DraftState>(() => {
-    // Create teams with the specific names
-    const initialTeams = teamNames.map((name, index) => ({
-      id: `team-${index + 1}`,
-      name,
-      draftPosition: null,
-      players: [],
-      assignedTo: null
-    })) as Team[];
-    
-    return {
-      settings: { ...defaultDraftSettings, numberOfRounds: 18 }, // 18 rounds
-      teams: initialTeams,
-      picks: [],
-      availablePlayers: [...samplePlayers],
-      currentPick: 0,
-      status: DraftStatus.NOT_STARTED
-    };
-  });
-
-  // User state
-  const [userId, setUserId] = useState<string | null>(null);
-  
-  // State for showing/hiding CSV uploader
+  // State local para o upload de CSV
   const [showCsvUploader, setShowCsvUploader] = useState(false);
+  
+  // Local user ID gerado aleatoriamente (para identificação do usuário)
+  const [localUserId, setLocalUserId] = useState<string | null>(null);
+
+  // Inicializa o ID do usuário na montagem do componente se não existir
+  useEffect(() => {
+    // Tenta obter ID existente do localStorage ou gera um novo
+    const storedUserId = localStorage.getItem('draftAppUserId');
+    const newUserId = storedUserId || uuidv4();
+    
+    if (!storedUserId) {
+      localStorage.setItem('draftAppUserId', newUserId);
+    }
+    
+    setLocalUserId(newUserId);
+    
+    // Conecta o usuário ao sistema de tempo real
+    if (newUserId && !userId) {
+      connectUser(newUserId);
+    }
+  }, [userId]);
 
   // Handle CSV players loaded
   const handlePlayersLoaded = (players: Player[]) => {
-    setDraftState(prev => ({
-      ...prev,
-      availablePlayers: players,
-    }));
-    
-    // Hide the uploader after successful import
     setShowCsvUploader(false);
     
     toast({
@@ -64,7 +65,6 @@ const Index = () => {
 
   // Handle timer completion
   const handleTimerComplete = () => {
-    // In a real app, you might want to auto-select a player or just advance the pick
     toast({
       title: "Time's up!",
       description: "The current team's time to pick has expired.",
@@ -74,7 +74,7 @@ const Index = () => {
 
   // Handle player selection
   const handleSelectPlayer = (playerId: string) => {
-    if (draftState.status !== DraftStatus.IN_PROGRESS) {
+    if (!draftState || draftState.status !== DraftStatus.IN_PROGRESS) {
       toast({
         title: "Draft not active",
         description: "The draft must be in progress to make a selection.",
@@ -87,7 +87,7 @@ const Index = () => {
       ? draftState.picks[draftState.currentPick].team 
       : null;
       
-    if (currentTeam && currentTeam.assignedTo !== userId && userId !== 'admin') {
+    if (currentTeam && currentTeam.assignedTo !== userId) {
       toast({
         title: "Not your turn",
         description: "You can only draft when it's your turn.",
@@ -96,133 +96,71 @@ const Index = () => {
       return;
     }
 
-    const updatedState = makeDraftPick(draftState, playerId);
-    setDraftState(updatedState);
-    
-    const pick = updatedState.picks[updatedState.currentPick - 1];
-    
-    if (pick && pick.player) {
-      toast({
-        title: "Player Drafted",
-        description: `${pick.team.name} selects ${pick.player.name} (${pick.player.position})`,
-      });
-    }
-    
-    // Check if draft is complete
-    if (updatedState.status === DraftStatus.COMPLETED) {
-      toast({
-        title: "Draft Complete",
-        description: "All picks have been made. Draft is now complete.",
-      });
-    }
+    // Usar a função do contexto
+    makePickRealTime(draftState.currentPick, playerId);
   };
 
   // Handle draft randomization
   const handleRandomize = (randomizedTeams: Team[]) => {
-    setDraftState(prev => ({
-      ...prev,
-      teams: randomizedTeams
-    }));
+    // Essa função é usada apenas na animação local
+    // A sincronização real é feita no RandomizerButton
   };
 
   // Handle team selection
   const handleTeamSelect = (userName: string, teamId: string) => {
-    setUserId(userName);
-    
-    setDraftState(prev => ({
-      ...prev,
-      teams: assignTeamToUser(prev.teams, userName, teamId)
-    }));
+    if (localUserId) {
+      selectTeam(localUserId, teamId);
+    }
   };
 
   // Handle starting the draft
   const handleStartDraft = () => {
-    // Make sure teams have draft positions
+    if (!draftState) return;
+    
     if (draftState.teams.some(team => team.draftPosition === null)) {
-      const randomizedTeams = randomizeDraftOrder(draftState.teams);
-      
-      const picks = generateDraftOrder(randomizedTeams, draftState.settings);
-      
-      setDraftState(prev => ({
-        ...prev,
-        teams: randomizedTeams,
-        picks,
-        currentPick: 0,
-        status: DraftStatus.IN_PROGRESS
-      }));
-    } else {
-      // Teams already have positions, just generate picks
-      const picks = generateDraftOrder(draftState.teams, draftState.settings);
-      
-      setDraftState(prev => ({
-        ...prev,
-        picks,
-        currentPick: 0,
-        status: DraftStatus.IN_PROGRESS
-      }));
+      // Se os times não tiverem posições definidas, avise o usuário
+      toast({
+        title: "Times não randomizados",
+        description: "Você precisa randomizar a ordem dos times antes de iniciar o draft.",
+        variant: "destructive"
+      });
+      return;
     }
     
-    toast({
-      title: "Draft Started",
-      description: "The draft is now in progress!",
-    });
+    // Gera a ordem dos picks
+    const picks = generateDraftOrder(draftState.teams, draftState.settings);
+    
+    // Iniciar o draft usando a função do contexto
+    const updatedDraftState: DraftState = {
+      ...draftState,
+      picks,
+      currentPick: 0,
+      status: DraftStatus.IN_PROGRESS
+    };
+    
+    startDraftRealTime(updatedDraftState);
   };
 
   // Handle resetting the draft
   const handleResetDraft = () => {
-    // Keep team assignments but reset other properties
-    const resetTeams = draftState.teams.map(team => ({
-      ...team, 
-      draftPosition: null, 
-      players: []
-    }));
-    
-    setDraftState({
-      settings: { ...defaultDraftSettings, numberOfRounds: 18 },
-      teams: resetTeams,
-      picks: [],
-      availablePlayers: [...samplePlayers],
-      currentPick: 0,
-      status: DraftStatus.NOT_STARTED
-    });
-    
-    toast({
-      title: "Draft Reset",
-      description: "The draft has been reset to its initial state.",
-    });
+    resetDraftRealTime();
   };
 
   // Handle pausing the draft
   const handlePauseDraft = () => {
-    setDraftState(prev => ({
-      ...prev,
-      status: DraftStatus.PAUSED
-    }));
-    
-    toast({
-      title: "Draft Paused",
-      description: "The draft has been paused.",
-    });
+    pauseDraftRealTime();
   };
 
   // Handle resuming the draft
   const handleResumeDraft = () => {
-    setDraftState(prev => ({
-      ...prev,
-      status: DraftStatus.IN_PROGRESS
-    }));
-    
-    toast({
-      title: "Draft Resumed",
-      description: "The draft has been resumed.",
-    });
+    resumeDraftRealTime();
   };
 
   // Get current user's team
-  const userTeam = userId ? getUserTeam(draftState.teams, userId) : null;
+  const userTeam = userId && draftState ? getUserTeam(draftState.teams, userId) : null;
 
   // Extract current team on the clock
-  const currentTeam = draftState.currentPick < draftState.picks.length 
+  const currentTeam = draftState && draftState.currentPick < draftState.picks.length 
     ? draftState.picks[draftState.currentPick].team 
     : null;
 
@@ -243,7 +181,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
         <Navigation 
-          draftStatus={draftState.status}
+          draftStatus={draftState?.status || DraftStatus.NOT_STARTED}
           onStartDraft={handleStartDraft}
           onResetDraft={handleResetDraft}
           onPauseDraft={handlePauseDraft}
@@ -251,7 +189,7 @@ const Index = () => {
         />
         
         {/* Sticky current pick info */}
-        {showStickyInfo && currentTeam && draftState.status === DraftStatus.IN_PROGRESS && (
+        {showStickyInfo && currentTeam && draftState?.status === DraftStatus.IN_PROGRESS && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white py-2 px-4 flex justify-between items-center shadow-md">
             <div className="flex items-center">
               <span className="font-medium">On the Clock: </span>
@@ -259,6 +197,12 @@ const Index = () => {
               <span className="ml-4 text-sm opacity-80">
                 Pick: {draftState.currentPick + 1} of {draftState.picks.length}
               </span>
+              
+              {userTeam && currentTeam.id === userTeam.id && (
+                <span className="ml-4 bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
+                  It's your turn!
+                </span>
+              )}
             </div>
             
             <div className="w-32">
@@ -271,8 +215,8 @@ const Index = () => {
           </div>
         )}
         
-        {/* If user is not logged in, show team selection */}
-        {!userId && draftState.status === DraftStatus.NOT_STARTED && (
+        {/* If user is not logged in or has not selected a team, show team selection */}
+        {(!userTeam && draftState && draftState.status === DraftStatus.NOT_STARTED) && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-3">
               <TeamSelection 
@@ -285,7 +229,7 @@ const Index = () => {
         )}
         
         {/* If user is logged in, show draft interface */}
-        {userId && (
+        {userId && draftState && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               {draftState.status === DraftStatus.NOT_STARTED && (
@@ -332,7 +276,7 @@ const Index = () => {
                 </div>
               )}
               
-              {draftState.picks.length > 0 && (
+              {draftState.picks?.length > 0 && (
                 <DraftBoard
                   picks={draftState.picks}
                   currentPick={draftState.currentPick}
@@ -346,7 +290,7 @@ const Index = () => {
                 players={draftState.availablePlayers}
                 onSelectPlayer={handleSelectPlayer}
                 disabled={draftState.status !== DraftStatus.IN_PROGRESS || 
-                          (currentTeam && currentTeam.assignedTo !== userId && userId !== 'admin')}
+                          (currentTeam && currentTeam.assignedTo !== userId)}
               />
             </div>
             
@@ -361,6 +305,12 @@ const Index = () => {
                   <div className="text-sm text-gray-600">
                     Pick: {draftState.currentPick + 1} of {draftState.picks.length}
                   </div>
+                  
+                  {userTeam && currentTeam.id === userTeam.id && (
+                    <div className="mt-3 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium border border-yellow-200">
+                      É a sua vez de escolher um jogador!
+                    </div>
+                  )}
                 </div>
               )}
               

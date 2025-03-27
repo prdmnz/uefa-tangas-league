@@ -9,99 +9,224 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      goalkeepers: {
+      connected_users: {
         Row: {
-          height: number | null
-          name: string
-          ovr: number
-          position: string
-          skillMoves: number | null
-          "stats.elasticity": number | null
-          "stats.handling": number | null
-          "stats.positioning": number | null
-          "stats.reflexes": number | null
-          "stats.shooting": number | null
-          "stats.speed": number | null
-          team: string
-          weight: number | null
+          connected_at: string | null
+          id: string
+          last_active: string | null
+          user_id: string
+          user_name: string
         }
         Insert: {
-          height?: number | null
-          name: string
-          ovr: number
-          position: string
-          skillMoves?: number | null
-          "stats.elasticity"?: number | null
-          "stats.handling"?: number | null
-          "stats.positioning"?: number | null
-          "stats.reflexes"?: number | null
-          "stats.shooting"?: number | null
-          "stats.speed"?: number | null
-          team: string
-          weight?: number | null
+          connected_at?: string | null
+          id?: string
+          last_active?: string | null
+          user_id: string
+          user_name: string
         }
         Update: {
-          height?: number | null
-          name?: string
-          ovr?: number
-          position?: string
-          skillMoves?: number | null
-          "stats.elasticity"?: number | null
-          "stats.handling"?: number | null
-          "stats.positioning"?: number | null
-          "stats.reflexes"?: number | null
-          "stats.shooting"?: number | null
-          "stats.speed"?: number | null
-          team?: string
-          weight?: number | null
+          connected_at?: string | null
+          id?: string
+          last_active?: string | null
+          user_id?: string
+          user_name?: string
         }
         Relationships: []
       }
-      players: {
+      draft_picks: {
         Row: {
-          height: number | null
-          name: string
-          ovr: number
-          position: string
-          skillMoves: number | null
-          "stats.defense": number | null
-          "stats.dribbling": number | null
-          "stats.pace": number | null
-          "stats.passing": number | null
-          "stats.physical": number | null
-          "stats.shooting": number | null
-          team: string
-          weight: number | null
+          id: string
+          overall: number
+          pick_in_round: number
+          player_id: string | null
+          round: number
+          team_id: string | null
+          timestamp: string | null
         }
         Insert: {
-          height?: number | null
+          id?: string
+          overall: number
+          pick_in_round: number
+          player_id?: string | null
+          round: number
+          team_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          id?: string
+          overall?: number
+          pick_in_round?: number
+          player_id?: string | null
+          round?: number
+          team_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_picks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      draft_state: {
+        Row: {
+          current_pick: number | null
+          id: string
+          number_of_rounds: number | null
+          snake_format: boolean | null
+          status: string
+          time_per_pick: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          current_pick?: number | null
+          id?: string
+          number_of_rounds?: number | null
+          snake_format?: boolean | null
+          status?: string
+          time_per_pick?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          current_pick?: number | null
+          id?: string
+          number_of_rounds?: number | null
+          snake_format?: boolean | null
+          status?: string
+          time_per_pick?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      field_players: {
+        Row: {
+          created_at: string | null
+          defense: number | null
+          dribbling: number | null
+          height: string | null
+          id: string
+          name: string
+          ovr: number
+          pace: number | null
+          passing: number | null
+          physical: number | null
+          position: string
+          shooting: number | null
+          skill_moves: number | null
+          team: string
+          weight: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          defense?: number | null
+          dribbling?: number | null
+          height?: string | null
+          id: string
+          name: string
+          ovr: number
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
+          position: string
+          shooting?: number | null
+          skill_moves?: number | null
+          team: string
+          weight?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          defense?: number | null
+          dribbling?: number | null
+          height?: string | null
+          id?: string
+          name?: string
+          ovr?: number
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
+          position?: string
+          shooting?: number | null
+          skill_moves?: number | null
+          team?: string
+          weight?: string | null
+        }
+        Relationships: []
+      }
+      goalkeepers: {
+        Row: {
+          created_at: string | null
+          elasticity: number | null
+          handling: number | null
+          height: string | null
+          id: string
           name: string
           ovr: number
           position: string
-          skillMoves?: number | null
-          "stats.defense"?: number | null
-          "stats.dribbling"?: number | null
-          "stats.pace"?: number | null
-          "stats.passing"?: number | null
-          "stats.physical"?: number | null
-          "stats.shooting"?: number | null
+          positioning: number | null
+          reflexes: number | null
+          shooting: number | null
+          speed: number | null
           team: string
-          weight?: number | null
+          weight: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          elasticity?: number | null
+          handling?: number | null
+          height?: string | null
+          id: string
+          name: string
+          ovr: number
+          position: string
+          positioning?: number | null
+          reflexes?: number | null
+          shooting?: number | null
+          speed?: number | null
+          team: string
+          weight?: string | null
         }
         Update: {
-          height?: number | null
+          created_at?: string | null
+          elasticity?: number | null
+          handling?: number | null
+          height?: string | null
+          id?: string
           name?: string
           ovr?: number
           position?: string
-          skillMoves?: number | null
-          "stats.defense"?: number | null
-          "stats.dribbling"?: number | null
-          "stats.pace"?: number | null
-          "stats.passing"?: number | null
-          "stats.physical"?: number | null
-          "stats.shooting"?: number | null
+          positioning?: number | null
+          reflexes?: number | null
+          shooting?: number | null
+          speed?: number | null
           team?: string
-          weight?: number | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          draft_position: number | null
+          id: string
+          name: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          draft_position?: number | null
+          id: string
+          name: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          draft_position?: number | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }

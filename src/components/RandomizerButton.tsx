@@ -32,7 +32,7 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
         clearInterval(animationInterval);
         setIsAnimating(false);
         
-        // Sincronize a randomização final com todos os usuários
+        // Sincronize a randomização final com todos os usuários via Supabase
         randomizeTeams(sequences[sequences.length - 1]);
       }
     }, 150);
