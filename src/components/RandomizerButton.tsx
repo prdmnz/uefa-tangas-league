@@ -4,6 +4,7 @@ import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
 import { useRealTime } from '../context/RealTimeContext';
 import { toast } from '@/hooks/use-toast';
+import { Trophy } from 'lucide-react';
 
 interface RandomizerButtonProps {
   teams: Team[];
@@ -15,7 +16,7 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
   const [isAnimating, setIsAnimating] = useState(false);
   const { randomizeTeams } = useRealTime();
 
-  const handleRandomize = () => {
+  const handleRandomize = async () => {
     if (disabled || isAnimating) return;
     
     // Make sure teams have assignedTo properties before randomizing
@@ -48,7 +49,7 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
         try {
           randomizeTeams(sequences[sequences.length - 1]);
         } catch (error) {
-          console.error('Error synchronizing randomization:', error);
+          console.error('Erro ao sincronizar randomização:', error);
           toast({
             title: 'Erro na randomização',
             description: 'Ocorreu um erro ao sincronizar a randomização',
@@ -66,13 +67,15 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
       className={`
         relative overflow-hidden button-transition focus-ring
         px-4 py-2.5 rounded-lg font-medium text-white
+        flex items-center justify-center gap-2
         ${disabled 
           ? 'bg-gray-400 cursor-not-allowed' 
-          : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
+          : 'bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 active:from-yellow-700 active:to-amber-800 shadow-md hover:shadow-lg'}
         ${isAnimating ? 'shimmer' : ''}
       `}
     >
-      {isAnimating ? 'Randomizando...' : 'Randomizar Ordem do Draft'}
+      <Trophy size={18} className="animate-pulse" />
+      {isAnimating ? 'Sorteando...' : 'Sortear Ordem do Draft'}
     </button>
   );
 };

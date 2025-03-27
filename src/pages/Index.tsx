@@ -11,9 +11,11 @@ import Navigation from '../components/Navigation';
 import CsvUploader from '../components/CsvUploader';
 import TeamSelection from '../components/TeamSelection';
 import Timer from '../components/Timer';
+import ChampionsBanner from '../components/ChampionsBanner';
 import { toast } from '@/hooks/use-toast';
 import { useRealTime } from '../context/RealTimeContext';
 import { v4 as uuidv4 } from 'uuid';
+import { FileText, Users, Trophy, Clock, AlertCircle } from 'lucide-react';
 
 const Index = () => {
   // Use the realtime context
@@ -121,8 +123,8 @@ const Index = () => {
     if (draftState.teams.some(team => team.draftPosition === null)) {
       // Se os times não tiverem posições definidas, avise o usuário
       toast({
-        title: "Times não randomizados",
-        description: "Você precisa randomizar a ordem dos times antes de iniciar o draft.",
+        title: "Times não sorteados",
+        description: "Você precisa sortear a ordem dos times antes de iniciar o draft.",
         variant: "destructive"
       });
       return;
@@ -187,19 +189,23 @@ const Index = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <Navigation 
-          draftStatus={draftState?.status || DraftStatus.NOT_STARTED}
-          onStartDraft={handleStartDraft}
-          onResetDraft={handleResetDraft}
-          onPauseDraft={handlePauseDraft}
-          onResumeDraft={handleResumeDraft}
-        />
+        <ChampionsBanner />
+        
+        <div className="mt-6">
+          <Navigation 
+            draftStatus={draftState?.status || DraftStatus.NOT_STARTED}
+            onStartDraft={handleStartDraft}
+            onResetDraft={handleResetDraft}
+            onPauseDraft={handlePauseDraft}
+            onResumeDraft={handleResumeDraft}
+          />
+        </div>
         
         {/* Sticky current pick info */}
         {showStickyInfo && currentTeam && draftState?.status === DraftStatus.IN_PROGRESS && (
-          <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white py-2 px-4 flex justify-between items-center shadow-md">
+          <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 flex justify-between items-center shadow-md">
             <div className="flex items-center">
               <span className="font-medium">Na Vez: </span>
               <span className="ml-2 font-bold text-lg">{currentTeam.name}</span>
@@ -208,13 +214,15 @@ const Index = () => {
               </span>
               
               {userTeam && currentTeam.id === userTeam.id && (
-                <span className="ml-4 bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
+                <span className="ml-4 bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse flex items-center gap-1">
+                  <AlertCircle size={12} />
                   É a sua vez!
                 </span>
               )}
             </div>
             
-            <div className="w-32">
+            <div className="w-32 flex items-center gap-2">
+              <Clock size={16} className="text-blue-200" />
               <Timer 
                 initialSeconds={draftState.settings.timePerPick} 
                 isRunning={draftState.status === DraftStatus.IN_PROGRESS}
@@ -226,7 +234,7 @@ const Index = () => {
         
         {/* If user is not logged in or has not selected a team, show team selection */}
         {(!userTeam && draftState && draftState.status === DraftStatus.NOT_STARTED) && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <div className="lg:col-span-3">
               <TeamSelection 
                 teams={draftState.teams}
@@ -239,14 +247,17 @@ const Index = () => {
         
         {/* If user is logged in, show draft interface */}
         {userId && draftState && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <div className="lg:col-span-2 space-y-6">
               {draftState.status === DraftStatus.NOT_STARTED && (
-                <div className="glass shadow-soft rounded-lg p-6 animate-fade-in">
-                  <h2 className="text-xl font-medium mb-4">Seja bem-vindo{userTeam ? `, técnico do ${userTeam.name}` : ''}!</h2>
+                <div className="glass-card p-6 animate-fade-in">
+                  <h2 className="text-xl font-medium mb-4 flex items-center gap-2">
+                    <Trophy size={20} className="text-amber-500" />
+                    Seja bem-vindo{userTeam ? `, técnico do ${userTeam.name}` : ''}!
+                  </h2>
                   <p className="text-gray-600 mb-6">
                     {userTeam ? `Você selecionou ${userTeam.name}. ` : ''}
-                    Este draft utiliza um formato snake com 9 times e 18 rodadas. Antes de começar, você precisa randomizar a ordem do draft.
+                    Este draft utiliza um formato snake com 9 times e 18 rodadas. Antes de começar, você precisa sortear a ordem do draft.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
@@ -258,9 +269,10 @@ const Index = () => {
                     
                     <button
                       onClick={handleStartDraft}
-                      className="button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                      className="button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 flex items-center gap-2 shadow-md"
                       disabled={draftState.teams.some(team => team.draftPosition === null)}
                     >
+                      <Play size={18} />
                       Iniciar Draft
                     </button>
                   </div>
@@ -268,12 +280,14 @@ const Index = () => {
                   <div className="flex justify-between items-center">
                     <button
                       onClick={() => setShowCsvUploader(!showCsvUploader)}
-                      className="text-blue-600 hover:text-blue-800 underline text-sm"
+                      className="text-blue-600 hover:text-blue-800 underline text-sm flex items-center gap-1"
                     >
+                      <FileText size={16} />
                       {showCsvUploader ? 'Esconder Upload CSV' : 'Importar Jogadores (CSV)'}
                     </button>
                     
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                      <Users size={14} />
                       {draftState.availablePlayers.length} jogadores disponíveis
                     </div>
                   </div>
@@ -308,8 +322,11 @@ const Index = () => {
             
             <div>
               {currentTeam && draftState.status === DraftStatus.IN_PROGRESS && (
-                <div className="glass shadow-soft rounded-lg p-4 mb-6 animate-fade-in">
-                  <h3 className="text-lg font-medium mb-2">Na Vez</h3>
+                <div className="glass-card p-4 mb-6 animate-fade-in">
+                  <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                    <Trophy size={18} className="text-yellow-500" />
+                    Na Vez
+                  </h3>
                   <div className="text-2xl font-semibold">{currentTeam.name}</div>
                   <div className="text-sm text-gray-600 mt-1">
                     Posição no Draft: {currentTeam.draftPosition}
@@ -319,7 +336,8 @@ const Index = () => {
                   </div>
                   
                   {userTeam && currentTeam.id === userTeam.id && (
-                    <div className="mt-3 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium border border-yellow-200">
+                    <div className="mt-3 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium border border-yellow-200 flex items-center gap-2">
+                      <AlertCircle size={16} />
                       É a sua vez de escolher um jogador!
                     </div>
                   )}

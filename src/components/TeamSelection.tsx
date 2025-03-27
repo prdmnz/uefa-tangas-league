@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Team } from '../types';
 import { toast } from '@/hooks/use-toast';
+import { UserPlus, Users, Check, Trophy, ShieldAlert } from 'lucide-react';
 
 interface TeamSelectionProps {
   teams: Team[];
@@ -54,12 +55,16 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
   const assignedTeams = teams.filter(team => team.assignedTo);
 
   return (
-    <div className="glass shadow-soft rounded-lg p-6 animate-fade-in">
-      <h2 className="text-xl font-medium mb-4">Selecione Seu Time</h2>
+    <div className="glass-card p-6 animate-fade-in">
+      <h2 className="text-xl font-medium mb-4 flex items-center gap-2">
+        <Trophy size={20} className="text-blue-600" />
+        Selecione Seu Time
+      </h2>
       
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            <UserPlus size={16} className="text-blue-600" />
             Seu Nome
           </label>
           <input
@@ -73,7 +78,8 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
         </div>
         
         <div>
-          <label htmlFor="teamSelect" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="teamSelect" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            <ShieldAlert size={16} className="text-blue-600" />
             Selecione o Time
           </label>
           <select
@@ -93,21 +99,25 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
         
         <button
           onClick={handleTeamSelect}
-          className="w-full button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+          className="w-full button-transition focus-ring px-4 py-3 rounded-lg font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:from-blue-800 active:to-blue-900 shadow-md flex items-center justify-center gap-2"
         >
+          <Check size={18} />
           Confirmar Seleção
         </button>
       </div>
       
       {assignedTeams.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-md font-medium mb-2">Times Já Selecionados</h3>
-          <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+            <Users size={18} className="text-blue-600" />
+            Times Já Selecionados
+          </h3>
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
             <ul className="space-y-2">
               {assignedTeams.map(team => (
-                <li key={team.id} className="flex justify-between items-center px-3 py-2 bg-white rounded shadow-sm">
+                <li key={team.id} className="flex justify-between items-center px-3 py-2 bg-white rounded shadow-sm border border-blue-50">
                   <span className="font-medium">{team.name}</span>
-                  <span className="text-sm text-gray-500">{team.assignedTo}</span>
+                  <span className="text-sm text-gray-500 bg-blue-50 px-2 py-1 rounded">{team.assignedTo}</span>
                 </li>
               ))}
             </ul>
@@ -119,8 +129,9 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
         <div className="mt-6">
           <button
             onClick={onStartDraft}
-            className="w-full button-transition focus-ring px-4 py-3 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 active:bg-green-800"
+            className="w-full button-transition focus-ring px-4 py-3 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 active:from-green-800 active:to-green-900 shadow-md flex items-center justify-center gap-2 animate-soft-pulse"
           >
+            <Trophy size={18} />
             Todos os Times Selecionados - Iniciar Draft
           </button>
         </div>
