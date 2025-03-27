@@ -16,7 +16,7 @@ import { useRealTime } from '../context/RealTimeContext';
 import { v4 as uuidv4 } from 'uuid';
 
 const Index = () => {
-  // Use o contexto de tempo real
+  // Use the realtime context
   const { 
     userId, 
     draftState, 
@@ -26,10 +26,11 @@ const Index = () => {
     makePick: makePickRealTime,
     resetDraft: resetDraftRealTime,
     pauseDraft: pauseDraftRealTime,
-    resumeDraft: resumeDraftRealTime
+    resumeDraft: resumeDraftRealTime,
+    randomizeTeams: randomizeTeamsRealTime
   } = useRealTime();
   
-  // State local para o upload de CSV
+  // Estado local para o upload de CSV
   const [showCsvUploader, setShowCsvUploader] = useState(false);
   
   // Local user ID gerado aleatoriamente (para identificação do usuário)
@@ -51,23 +52,23 @@ const Index = () => {
     if (newUserId && !userId) {
       connectUser(newUserId);
     }
-  }, [userId]);
+  }, [userId, connectUser]);
 
   // Handle CSV players loaded
   const handlePlayersLoaded = (players: Player[]) => {
     setShowCsvUploader(false);
     
     toast({
-      title: "Players Imported",
-      description: `${players.length} players have been imported successfully.`,
+      title: "Jogadores Importados",
+      description: `${players.length} jogadores foram importados com sucesso.`,
     });
   };
 
   // Handle timer completion
   const handleTimerComplete = () => {
     toast({
-      title: "Time's up!",
-      description: "The current team's time to pick has expired.",
+      title: "Tempo esgotado!",
+      description: "O tempo para escolha do time atual expirou.",
       variant: "destructive"
     });
   };
@@ -76,8 +77,8 @@ const Index = () => {
   const handleSelectPlayer = (playerId: string) => {
     if (!draftState || draftState.status !== DraftStatus.IN_PROGRESS) {
       toast({
-        title: "Draft not active",
-        description: "The draft must be in progress to make a selection.",
+        title: "Draft não ativo",
+        description: "O draft precisa estar em andamento para fazer uma seleção.",
       });
       return;
     }
@@ -89,8 +90,8 @@ const Index = () => {
       
     if (currentTeam && currentTeam.assignedTo !== userId) {
       toast({
-        title: "Not your turn",
-        description: "You can only draft when it's your turn.",
+        title: "Não é sua vez",
+        description: "Você só pode escolher quando for sua vez.",
         variant: "destructive"
       });
       return;
@@ -109,7 +110,7 @@ const Index = () => {
   // Handle team selection
   const handleTeamSelect = (userName: string, teamId: string) => {
     if (localUserId) {
-      selectTeam(localUserId, teamId);
+      selectTeam(userName, teamId);
     }
   };
 
@@ -177,6 +178,14 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Draftboard should show immediately if we're in the middle of a draft
+  const showDraftBoard = draftState && (
+    draftState.status === DraftStatus.IN_PROGRESS || 
+    draftState.status === DraftStatus.PAUSED ||
+    draftState.status === DraftStatus.COMPLETED ||
+    (draftState.picks && draftState.picks.length > 0)
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
@@ -192,15 +201,15 @@ const Index = () => {
         {showStickyInfo && currentTeam && draftState?.status === DraftStatus.IN_PROGRESS && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white py-2 px-4 flex justify-between items-center shadow-md">
             <div className="flex items-center">
-              <span className="font-medium">On the Clock: </span>
+              <span className="font-medium">Na Vez: </span>
               <span className="ml-2 font-bold text-lg">{currentTeam.name}</span>
               <span className="ml-4 text-sm opacity-80">
-                Pick: {draftState.currentPick + 1} of {draftState.picks.length}
+                Pick: {draftState.currentPick + 1} de {draftState.picks.length}
               </span>
               
               {userTeam && currentTeam.id === userTeam.id && (
                 <span className="ml-4 bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
-                  It's your turn!
+                  É a sua vez!
                 </span>
               )}
             </div>
@@ -217,7 +226,7 @@ const Index = () => {
         
         {/* If user is not logged in or has not selected a team, show team selection */}
         {(!userTeam && draftState && draftState.status === DraftStatus.NOT_STARTED) && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-3">
               <TeamSelection 
                 teams={draftState.teams}
@@ -234,10 +243,10 @@ const Index = () => {
             <div className="lg:col-span-2 space-y-6">
               {draftState.status === DraftStatus.NOT_STARTED && (
                 <div className="glass shadow-soft rounded-lg p-6 animate-fade-in">
-                  <h2 className="text-xl font-medium mb-4">Welcome, {userId}!</h2>
+                  <h2 className="text-xl font-medium mb-4">Seja bem-vindo{userTeam ? `, técnico do ${userTeam.name}` : ''}!</h2>
                   <p className="text-gray-600 mb-6">
-                    {userTeam ? `You have selected ${userTeam.name}. ` : ''}
-                    This draft uses a snake format with 9 teams and 18 rounds. Before starting, you need to randomize the draft order.
+                    {userTeam ? `Você selecionou ${userTeam.name}. ` : ''}
+                    Este draft utiliza um formato snake com 9 times e 18 rodadas. Antes de começar, você precisa randomizar a ordem do draft.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
@@ -250,8 +259,9 @@ const Index = () => {
                     <button
                       onClick={handleStartDraft}
                       className="button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                      disabled={draftState.teams.some(team => team.draftPosition === null)}
                     >
-                      Start Draft
+                      Iniciar Draft
                     </button>
                   </div>
                   
@@ -276,7 +286,7 @@ const Index = () => {
                 </div>
               )}
               
-              {draftState.picks?.length > 0 && (
+              {showDraftBoard && (
                 <DraftBoard
                   picks={draftState.picks}
                   currentPick={draftState.currentPick}
@@ -286,24 +296,26 @@ const Index = () => {
                 />
               )}
               
-              <PlayerList
-                players={draftState.availablePlayers}
-                onSelectPlayer={handleSelectPlayer}
-                disabled={draftState.status !== DraftStatus.IN_PROGRESS || 
-                          (currentTeam && currentTeam.assignedTo !== userId)}
-              />
+              {draftState.status === DraftStatus.IN_PROGRESS && (
+                <PlayerList
+                  players={draftState.availablePlayers}
+                  onSelectPlayer={handleSelectPlayer}
+                  disabled={draftState.status !== DraftStatus.IN_PROGRESS || 
+                            (currentTeam && currentTeam.assignedTo !== userId)}
+                />
+              )}
             </div>
             
             <div>
               {currentTeam && draftState.status === DraftStatus.IN_PROGRESS && (
                 <div className="glass shadow-soft rounded-lg p-4 mb-6 animate-fade-in">
-                  <h3 className="text-lg font-medium mb-2">On The Clock</h3>
+                  <h3 className="text-lg font-medium mb-2">Na Vez</h3>
                   <div className="text-2xl font-semibold">{currentTeam.name}</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Draft Position: {currentTeam.draftPosition}
+                    Posição no Draft: {currentTeam.draftPosition}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Pick: {draftState.currentPick + 1} of {draftState.picks.length}
+                    Pick: {draftState.currentPick + 1} de {draftState.picks.length}
                   </div>
                   
                   {userTeam && currentTeam.id === userTeam.id && (

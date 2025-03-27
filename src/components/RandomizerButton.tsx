@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
 import { useRealTime } from '../context/RealTimeContext';
+import { toast } from '@/hooks/use-toast';
 
 interface RandomizerButtonProps {
   teams: Team[];
@@ -16,6 +17,17 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
 
   const handleRandomize = () => {
     if (disabled || isAnimating) return;
+    
+    // Make sure teams have assignedTo properties before randomizing
+    const unassignedTeams = teams.filter(team => !team.assignedTo);
+    if (unassignedTeams.length === teams.length) {
+      toast({
+        title: 'Times não atribuídos',
+        description: 'Por favor, selecione os times antes de randomizar',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     setIsAnimating(true);
     
@@ -37,6 +49,11 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
           randomizeTeams(sequences[sequences.length - 1]);
         } catch (error) {
           console.error('Error synchronizing randomization:', error);
+          toast({
+            title: 'Erro na randomização',
+            description: 'Ocorreu um erro ao sincronizar a randomização',
+            variant: 'destructive'
+          });
         }
       }
     }, 150);
@@ -55,7 +72,7 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
         ${isAnimating ? 'shimmer' : ''}
       `}
     >
-      {isAnimating ? 'Randomizing...' : 'Randomize Draft Order'}
+      {isAnimating ? 'Randomizando...' : 'Randomizar Ordem do Draft'}
     </button>
   );
 };

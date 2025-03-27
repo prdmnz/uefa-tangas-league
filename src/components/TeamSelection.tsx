@@ -16,8 +16,8 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
   const handleTeamSelect = () => {
     if (!selectedTeam) {
       toast({
-        title: "No team selected",
-        description: "Please select a team to continue",
+        title: "Nenhum time selecionado",
+        description: "Por favor, selecione um time para continuar",
         variant: "destructive"
       });
       return;
@@ -25,8 +25,8 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
 
     if (!userName.trim()) {
       toast({
-        title: "No name entered",
-        description: "Please enter your name to continue",
+        title: "Nome não informado",
+        description: "Por favor, digite seu nome para continuar",
         variant: "destructive"
       });
       return;
@@ -36,8 +36,8 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
     const team = teams.find(t => t.id === selectedTeam);
     if (team?.assignedTo) {
       toast({
-        title: "Team already assigned",
-        description: `${team.name} is already assigned to another user`,
+        title: "Time já atribuído",
+        description: `${team.name} já está atribuído a outro usuário`,
         variant: "destructive"
       });
       return;
@@ -45,8 +45,8 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
 
     onTeamSelect(userName, selectedTeam);
     toast({
-      title: "Team selected",
-      description: `You have selected ${teams.find(t => t.id === selectedTeam)?.name}`,
+      title: "Time selecionado",
+      description: `Você selecionou ${teams.find(t => t.id === selectedTeam)?.name}`,
     });
   };
 
@@ -55,12 +55,12 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
 
   return (
     <div className="glass shadow-soft rounded-lg p-6 animate-fade-in">
-      <h2 className="text-xl font-medium mb-4">Select Your Team</h2>
+      <h2 className="text-xl font-medium mb-4">Selecione Seu Time</h2>
       
       <div className="space-y-4">
         <div>
           <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-1">
-            Your Name
+            Seu Nome
           </label>
           <input
             id="userName"
@@ -68,13 +68,13 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your name"
+            placeholder="Digite seu nome"
           />
         </div>
         
         <div>
           <label htmlFor="teamSelect" className="block text-sm font-medium text-gray-700 mb-1">
-            Select Team
+            Selecione o Time
           </label>
           <select
             id="teamSelect"
@@ -82,7 +82,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
             onChange={(e) => setSelectedTeam(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">Select a team</option>
+            <option value="">Selecione um time</option>
             {availableTeams.map(team => (
               <option key={team.id} value={team.id}>
                 {team.name}
@@ -95,13 +95,13 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
           onClick={handleTeamSelect}
           className="w-full button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
         >
-          Confirm Selection
+          Confirmar Seleção
         </button>
       </div>
       
       {assignedTeams.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-md font-medium mb-2">Teams Already Selected</h3>
+          <h3 className="text-md font-medium mb-2">Times Já Selecionados</h3>
           <div className="bg-gray-50 rounded-lg p-4">
             <ul className="space-y-2">
               {assignedTeams.map(team => (
@@ -121,7 +121,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
             onClick={onStartDraft}
             className="w-full button-transition focus-ring px-4 py-3 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 active:bg-green-800"
           >
-            All Teams Selected - Start Draft
+            Todos os Times Selecionados - Iniciar Draft
           </button>
         </div>
       )}
