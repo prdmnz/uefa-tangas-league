@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useReducer, useState } from 'react';
 import { websocketService, WebSocketEvent } from '../services/websocketService';
 import { DraftState, Team, Player, DraftStatus, RealTimeState } from '../types';
@@ -98,6 +99,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const { data: draftStateData, error: draftStateError } = await supabase
         .from('draft_state')
         .select('*')
+        .limit(1)
         .single();
 
       if (draftStateError) {
@@ -513,14 +515,15 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const startDraft = async (draftState: DraftState) => {
     try {
-      // Atualizar estado do draft
+      // Atualizar estado do draft - Fixed the update query to include WHERE clause
       const { error } = await supabase
         .from('draft_state')
         .update({ 
           status: DraftStatus.IN_PROGRESS,
           current_pick: 0,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', draftStateData?.id || '');  // Add WHERE clause with the draft state ID
       
       if (error) {
         console.error('Erro ao iniciar draft:', error);
@@ -590,7 +593,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           status: pickIndex + 1 >= state.draftState.picks.length 
             ? DraftStatus.COMPLETED 
             : DraftStatus.IN_PROGRESS
-        });
+        })
+        .eq('id', draftStateData?.id || '');  // Add WHERE clause with the draft state ID
       
       toast({
         title: 'Jogador Selecionado',
@@ -689,6 +693,18 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const resetDraft = async () => {
     try {
+      // Get the draft state ID first
+      const { data: draftStateData, error: draftStateError } = await supabase
+        .from('draft_state')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (draftStateError) {
+        console.error('Erro ao obter ID do draft state:', draftStateError);
+        return;
+      }
+      
       // Resetar estado do draft
       await supabase
         .from('draft_state')
@@ -696,7 +712,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           status: DraftStatus.NOT_STARTED,
           current_pick: 0,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
       
       // Limpar picks
       await supabase.from('draft_picks').delete().neq('id', 'placeholder');
@@ -705,7 +722,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await supabase
         .from('teams')
         .update({ 
-          draft_position: null
+          draft_position: null,
+          assigned_to: null
         });
       
       toast({
@@ -719,13 +737,26 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const pauseDraft = async () => {
     try {
+      // Get the draft state ID first
+      const { data: draftStateData, error: draftStateError } = await supabase
+        .from('draft_state')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (draftStateError) {
+        console.error('Erro ao obter ID do draft state:', draftStateError);
+        return;
+      }
+      
       // Pausar draft
       const { error } = await supabase
         .from('draft_state')
         .update({ 
           status: DraftStatus.PAUSED,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
       
       if (error) {
         console.error('Erro ao pausar draft:', error);
@@ -743,13 +774,26 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const resumeDraft = async () => {
     try {
+      // Get the draft state ID first
+      const { data: draftStateData, error: draftStateError } = await supabase
+        .from('draft_state')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (draftStateError) {
+        console.error('Erro ao obter ID do draft state:', draftStateError);
+        return;
+      }
+      
       // Retomar draft
       const { error } = await supabase
         .from('draft_state')
         .update({ 
           status: DraftStatus.IN_PROGRESS,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
       
       if (error) {
         console.error('Erro ao retomar draft:', error);
@@ -777,6 +821,9 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_CONNECTED', payload: false });
     dispatch({ type: 'SET_USER_ID', payload: null });
   };
+  
+  // Fix variable declaration to prevent errors
+  let draftStateData: any = null;
   
   const value = {
     isConnected: state.isConnected,
