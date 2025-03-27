@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { DraftStatus } from '../types';
-import { Play, Pause, RotateCcw, RefreshCw } from 'lucide-react';
 
 interface NavigationProps {
   draftStatus: DraftStatus;
@@ -19,7 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({
   onResumeDraft
 }) => {
   return (
-    <header className="w-full glass shadow-soft mb-6 px-6 py-4 rounded-lg animate-fade-in border border-blue-100">
+    <header className="w-full glass shadow-soft mb-6 px-6 py-4 rounded-lg animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent uppercase tracking-wider font-serif">
@@ -27,7 +26,7 @@ const Navigation: React.FC<NavigationProps> = ({
           </h1>
           
           <div className="ml-4 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            9 Times
+            9 Teams
           </div>
         </div>
         
@@ -35,40 +34,36 @@ const Navigation: React.FC<NavigationProps> = ({
           {draftStatus === DraftStatus.NOT_STARTED && (
             <button
               onClick={onStartDraft}
-              className="button-transition focus-ring px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 flex items-center gap-2"
+              className="button-transition focus-ring px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800"
             >
-              <Play size={16} />
-              Iniciar Draft
+              Start Draft
             </button>
           )}
           
           {draftStatus === DraftStatus.IN_PROGRESS && (
             <button
               onClick={onPauseDraft}
-              className="button-transition focus-ring px-4 py-2 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 active:bg-amber-700 flex items-center gap-2"
+              className="button-transition focus-ring px-4 py-2 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 active:bg-amber-700"
             >
-              <Pause size={16} />
-              Pausar Draft
+              Pause Draft
             </button>
           )}
           
           {draftStatus === DraftStatus.PAUSED && (
             <button
               onClick={onResumeDraft}
-              className="button-transition focus-ring px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 active:bg-green-700 flex items-center gap-2"
+              className="button-transition focus-ring px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 active:bg-green-700"
             >
-              <Play size={16} />
-              Continuar Draft
+              Resume Draft
             </button>
           )}
           
           {draftStatus !== DraftStatus.NOT_STARTED && (
             <button
               onClick={onResetDraft}
-              className="button-transition focus-ring px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 active:bg-red-800 flex items-center gap-2"
+              className="button-transition focus-ring px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 active:bg-red-800"
             >
-              <RotateCcw size={16} />
-              Reiniciar Draft
+              Reset Draft
             </button>
           )}
         </div>

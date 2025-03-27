@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 210 50% 98%;
+    --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     
     --card: 0 0% 100%;
@@ -31,41 +31,41 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 214 32% 91%;
+    --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 215 85% 60%;
+    --ring: 240 5% 65%;
     
     --radius: 0.75rem;
   }
  
   .dark {
-    --background: 223 36% 13%;
-    --foreground: 210 40% 98%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
     
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
     
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
     
-    --primary: 210 100% 55%;
+    --primary: 210 100% 50%;
     --primary-foreground: 0 0% 98%;
     
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
     
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 64.9%;
     
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 224 76% 48%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 240 5% 64.9%;
   }
 }
 
@@ -75,14 +75,13 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-blue-50 to-indigo-100 text-foreground font-sans antialiased min-h-screen;
+    @apply bg-background text-foreground font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-attachment: fixed;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium tracking-tight font-title;
+    @apply font-medium tracking-tight;
   }
   
   h1 {
@@ -100,11 +99,7 @@
 
 @layer components {
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/50 shadow-sm;
-  }
-  
-  .glass-card {
-    @apply bg-white/90 backdrop-blur-md border border-blue-100/50 shadow-md rounded-xl;
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
   }
   
   .glass-dark {
@@ -143,44 +138,4 @@
   .shimmer {
     @apply bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] animate-shimmer;
   }
-
-  .champions-glow {
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-  
-  .team-card {
-    @apply glass-card p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:bg-white;
-  }
-  
-  .player-card {
-    @apply glass-card p-4 transition-all duration-200 hover:shadow-md hover:bg-white/100;
-  }
-}
-
-/* Estilo especial para itens do draft */
-.draft-pick-item {
-  @apply relative overflow-hidden transition-all duration-300;
-}
-
-.draft-pick-item::before {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 opacity-0 transition-opacity duration-300;
-}
-
-.draft-pick-item:hover::before {
-  @apply opacity-100;
-}
-
-.draft-pick-item.current {
-  @apply bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-l-yellow-500;
-}
-
-/* Animação de pulso para elementos interativos */
-@keyframes soft-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-
-.animate-soft-pulse {
-  animation: soft-pulse 2s ease-in-out infinite;
 }

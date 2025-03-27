@@ -60,8 +60,7 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				title: ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
+				sans: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
 				mono: ['SF Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
 			},
 			keyframes: {
@@ -111,8 +110,7 @@ export default {
 			boxShadow: {
 				'soft': '0 2px 10px rgba(0, 0, 0, 0.05)',
 				'medium': '0 4px 20px rgba(0, 0, 0, 0.08)',
-				'strong': '0 8px 30px rgba(0, 0, 0, 0.12)',
-                'champions': '0 0 20px rgba(59, 130, 246, 0.2)'
+				'strong': '0 8px 30px rgba(0, 0, 0, 0.12)'
 			}
 		}
 	},
