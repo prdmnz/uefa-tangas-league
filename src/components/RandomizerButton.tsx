@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { randomizeDraftOrder } from '../utils/draftUtils';
+import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
 
 interface RandomizerButtonProps {
@@ -17,23 +17,20 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
     
     setIsAnimating(true);
     
-    // Play randomization animation
-    const shuffleAnimation = Array.from({ length: 10 }).map((_, i) => {
-      return new Promise<void>(resolve => {
-        setTimeout(() => {
-          const tempRandomized = randomizeDraftOrder(teams);
-          onRandomize(tempRandomized);
-          resolve();
-        }, i * 100);
-      });
-    });
+    // Generate visual randomization sequences
+    const sequences = visualRandomizer(teams, 10);
     
-    // After animation completes, set the final order
-    Promise.all(shuffleAnimation).then(() => {
-      const finalRandomized = randomizeDraftOrder(teams);
-      onRandomize(finalRandomized);
-      setIsAnimating(false);
-    });
+    // Play randomization animation
+    let step = 0;
+    const animationInterval = setInterval(() => {
+      if (step < sequences.length) {
+        onRandomize(sequences[step]);
+        step++;
+      } else {
+        clearInterval(animationInterval);
+        setIsAnimating(false);
+      }
+    }, 150);
   };
 
   return (

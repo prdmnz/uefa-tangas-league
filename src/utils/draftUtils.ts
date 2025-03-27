@@ -1,4 +1,3 @@
-
 import { DraftPick, DraftSettings, DraftState, DraftStatus, Player, Team, TeamPlayer } from "../types";
 
 /**
@@ -48,6 +47,33 @@ export const randomizeDraftOrder = (teams: Team[]): Team[] => {
     ...team,
     draftPosition: index + 1
   }));
+};
+
+/**
+ * Visual randomizer that returns a sequence of team arrays for animation
+ */
+export const visualRandomizer = (teams: Team[], steps = 10): Team[][] => {
+  const sequences: Team[][] = [];
+  
+  for (let step = 0; step < steps; step++) {
+    const shuffled = [...teams];
+    
+    // Fisher-Yates shuffle
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Assign draft positions
+    const teamWithPositions = shuffled.map((team, index) => ({
+      ...team,
+      draftPosition: index + 1
+    }));
+    
+    sequences.push(teamWithPositions);
+  }
+  
+  return sequences;
 };
 
 /**
@@ -166,4 +192,59 @@ export const getUniquePositions = (players: Player[]): string[] => {
 export const getUniqueTeams = (players: Player[]): string[] => {
   const teams = players.map(player => player.team);
   return [...new Set(teams)].sort();
+};
+
+/**
+ * Get position color based on FIFA colors
+ */
+export const getPositionColor = (position: string): string => {
+  // FIFA-inspired position colors
+  const positionColors: Record<string, string> = {
+    // Goalkeepers - Yellow
+    'GK': 'bg-yellow-100 text-yellow-800',
+    
+    // Defenders - Blue
+    'CB': 'bg-blue-100 text-blue-800',
+    'LB': 'bg-blue-100 text-blue-800',
+    'RB': 'bg-blue-100 text-blue-800',
+    'LWB': 'bg-blue-100 text-blue-800',
+    'RWB': 'bg-blue-100 text-blue-800',
+    
+    // Midfielders - Green
+    'CDM': 'bg-green-100 text-green-800',
+    'CM': 'bg-green-100 text-green-800',
+    'CAM': 'bg-green-100 text-green-800',
+    'LM': 'bg-green-100 text-green-800',
+    'RM': 'bg-green-100 text-green-800',
+    
+    // Forwards - Red
+    'LW': 'bg-red-100 text-red-800',
+    'RW': 'bg-red-100 text-red-800',
+    'ST': 'bg-red-100 text-red-800',
+    'CF': 'bg-red-100 text-red-800'
+  };
+  
+  return positionColors[position] || 'bg-gray-100 text-gray-800';
+};
+
+/**
+ * Assign a team to a user
+ */
+export const assignTeamToUser = (teams: Team[], userId: string, teamId: string): Team[] => {
+  return teams.map(team => {
+    if (team.id === teamId) {
+      return {
+        ...team,
+        assignedTo: userId
+      };
+    }
+    return team;
+  });
+};
+
+/**
+ * Get the user's assigned team
+ */
+export const getUserTeam = (teams: Team[], userId: string): Team | undefined => {
+  return teams.find(team => team.assignedTo === userId);
 };

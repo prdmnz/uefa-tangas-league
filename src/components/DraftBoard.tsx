@@ -2,7 +2,7 @@
 import React from 'react';
 import { DraftPick, Team } from '../types';
 import Timer from './Timer';
-import { formatTime } from '../utils/draftUtils';
+import { getPositionColor } from '../utils/draftUtils';
 
 interface DraftBoardProps {
   picks: DraftPick[];
@@ -23,8 +23,8 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
   const visiblePicks = picks.slice(0, currentPick + 10);
   
   return (
-    <div className="glass shadow-soft rounded-lg overflow-hidden animate-fade-in">
-      <div className="p-4 border-b border-gray-200">
+    <div className="glass shadow-soft rounded-lg overflow-hidden animate-fade-in relative">
+      <div className="p-4 border-b border-gray-200 sticky top-0 z-20 bg-white/95 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-medium">Draft Board</h2>
           
@@ -42,7 +42,7 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
       
       <div className="scrollbar-thin overflow-y-auto" style={{ maxHeight: "60vh" }}>
         <table className="w-full">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+          <thead className="bg-gray-50 sticky top-[73px] z-10">
             <tr>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                 Pick
@@ -64,6 +64,7 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {visiblePicks.map((pick, index) => {
               const isCurrentPick = index === currentPick;
+              const positionColor = pick.player ? getPositionColor(pick.player.position) : '';
               
               return (
                 <tr 
@@ -96,7 +97,7 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
                   
                   <td className="py-3 px-4 whitespace-nowrap">
                     {pick.player ? (
-                      <span className="px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-md ${positionColor}`}>
                         {pick.player.position}
                       </span>
                     ) : (

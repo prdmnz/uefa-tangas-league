@@ -43,6 +43,7 @@ export interface Team {
   logo?: string;
   draftPosition: number | null;
   players: TeamPlayer[];
+  assignedTo: string | null; // User who selected this team
 }
 
 export interface DraftPick {

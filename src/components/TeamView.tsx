@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Team } from '../types';
+import { getPositionColor } from '../utils/draftUtils';
 
 interface TeamViewProps {
   teams: Team[];
@@ -42,6 +43,12 @@ const TeamView: React.FC<TeamViewProps> = ({ teams }) => {
            (positionOrder[b as keyof typeof positionOrder] || 99);
   });
   
+  // Identify missing key positions
+  const keyPositions = ['GK', 'CB', 'CM', 'ST']; // Example key positions
+  const missingPositions = selectedTeamData 
+    ? keyPositions.filter(pos => !playersByPosition[pos] || playersByPosition[pos].length === 0)
+    : [];
+  
   return (
     <div className="glass shadow-soft rounded-lg overflow-hidden animate-fade-in">
       <div className="p-4 border-b border-gray-200">
@@ -71,6 +78,22 @@ const TeamView: React.FC<TeamViewProps> = ({ teams }) => {
             <div className="text-sm text-gray-600">
               Players Drafted: {selectedTeamData.players.length}
             </div>
+            
+            {missingPositions.length > 0 && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-sm font-medium text-amber-800">Missing Key Positions:</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {missingPositions.map(pos => (
+                    <span 
+                      key={pos} 
+                      className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-medium"
+                    >
+                      {pos}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           {selectedTeamData.players.length > 0 ? (
@@ -78,7 +101,10 @@ const TeamView: React.FC<TeamViewProps> = ({ teams }) => {
               {sortedPositions.map(position => (
                 <div key={position} className="animate-fade-in">
                   <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                    {position} ({playersByPosition[position].length})
+                    <span className={`inline-block px-2 py-0.5 rounded mr-2 ${getPositionColor(position)}`}>
+                      {position}
+                    </span>
+                    <span>({playersByPosition[position].length})</span>
                   </h4>
                   
                   <div className="bg-gray-50 rounded-lg p-3">

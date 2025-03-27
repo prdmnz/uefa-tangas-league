@@ -21,8 +21,8 @@ const Navigation: React.FC<NavigationProps> = ({
     <header className="w-full glass shadow-soft mb-6 px-6 py-4 rounded-lg animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-            Snake Draft Board
+          <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent uppercase tracking-wider font-serif">
+            UEFA Tangas League
           </h1>
           
           <div className="ml-4 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
