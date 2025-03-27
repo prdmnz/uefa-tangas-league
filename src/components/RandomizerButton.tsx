@@ -32,8 +32,12 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
         clearInterval(animationInterval);
         setIsAnimating(false);
         
-        // Sincronize a randomização final com todos os usuários via Supabase
-        randomizeTeams(sequences[sequences.length - 1]);
+        // Synchronize the final randomization with all users via Supabase
+        try {
+          randomizeTeams(sequences[sequences.length - 1]);
+        } catch (error) {
+          console.error('Error synchronizing randomization:', error);
+        }
       }
     }, 150);
   };
