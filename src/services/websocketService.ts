@@ -1,8 +1,7 @@
-
 import { io, Socket } from 'socket.io-client';
 import { Player, Team, DraftState } from '../types';
 
-// Tipos de eventos que podem ser enviados/recebidos
+// Types of events that can be sent/received
 export type WebSocketEvent = 
   | { type: 'CONNECT_USER'; payload: { userId: string; userName: string; } }
   | { type: 'TEAM_SELECTED'; payload: { userId: string; teamId: string; } }
@@ -10,9 +9,9 @@ export type WebSocketEvent =
   | { type: 'PICK_MADE'; payload: { pickIndex: number; playerId: string; } }
   | { type: 'TEAMS_RANDOMIZED'; payload: { teams: Team[] } }
   | { type: 'CSV_UPLOADED'; payload: { players: Player[] } }
-  | { type: 'DRAFT_RESET' }
-  | { type: 'DRAFT_PAUSED' }
-  | { type: 'DRAFT_RESUMED' };
+  | { type: 'DRAFT_RESET'; payload?: null }
+  | { type: 'DRAFT_PAUSED'; payload?: null }
+  | { type: 'DRAFT_RESUMED'; payload?: null };
 
 class WebSocketService {
   private socket: Socket | null = null;
@@ -20,7 +19,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   
-  // Iniciar conexão WebSocket
+  // Start WebSocket connection
   connect(userId: string): void {
     if (this.socket) return;
     
@@ -57,7 +56,7 @@ class WebSocketService {
     });
     
     this.socket.on('message', (message: WebSocketEvent) => {
-      this.notifyListeners(message.type, message.payload);
+      this.notifyListeners(message.type, message.payload || {});
     });
     
     this.socket.on('reconnect_attempt', (attempt) => {
@@ -71,7 +70,7 @@ class WebSocketService {
     });
   }
   
-  // Enviar evento para o servidor
+  // Send event to server
   sendEvent(event: WebSocketEvent): void {
     if (!this.socket) {
       console.error('Cannot send event: WebSocket not connected');
@@ -81,7 +80,7 @@ class WebSocketService {
     this.socket.emit('message', event);
   }
   
-  // Adicionar listener para um evento específico
+  // Add listener for specific event
   on(eventType: string, callback: Function): void {
     if (!this.listeners.has(eventType)) {
       this.listeners.set(eventType, []);
@@ -90,7 +89,7 @@ class WebSocketService {
     this.listeners.get(eventType)?.push(callback);
   }
   
-  // Remover listener
+  // Remove listener
   off(eventType: string, callback: Function): void {
     if (!this.listeners.has(eventType)) return;
     
@@ -103,7 +102,7 @@ class WebSocketService {
     }
   }
   
-  // Notificar todos os listeners de um evento
+  // Notify all listeners for an event
   private notifyListeners(eventType: string, data: any): void {
     if (!this.listeners.has(eventType)) return;
     
@@ -116,7 +115,7 @@ class WebSocketService {
     });
   }
   
-  // Desconectar WebSocket
+  // Disconnect WebSocket
   disconnect(): void {
     if (!this.socket) return;
     
@@ -126,5 +125,5 @@ class WebSocketService {
   }
 }
 
-// Exportar uma instância singleton do serviço
+// Export a singleton instance of the service
 export const websocketService = new WebSocketService();

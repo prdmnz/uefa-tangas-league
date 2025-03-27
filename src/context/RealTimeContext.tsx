@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import { websocketService, WebSocketEvent } from '../services/websocketService';
 import { DraftState, Team, Player, DraftStatus } from '../types';
@@ -22,7 +21,7 @@ interface RealTimeContextState {
 
 const RealTimeContext = createContext<RealTimeContextState | undefined>(undefined);
 
-// Reducer para gerenciar o estado compartilhado
+// Reducer to manage shared state
 type RealTimeAction =
   | { type: 'SET_CONNECTED'; payload: boolean }
   | { type: 'SET_USER_ID'; payload: string | null }
@@ -72,8 +71,6 @@ function realTimeReducer(state: RealTimeState, action: RealTimeAction): RealTime
       };
     case 'UPDATE_PICK':
       if (!state.draftState) return state;
-      // Lógica semelhante ao makeDraftPick, mas usando o pickIndex e playerId
-      // Para simplificar, não implementamos completamente - isso seria feito na integração real
       return state;
     case 'SET_DRAFT_STATUS':
       if (!state.draftState) return state;
@@ -117,7 +114,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
-  // Setup WebSocket event handlers
   useEffect(() => {
     websocketService.on('connect', handleConnect);
     websocketService.on('disconnect', handleDisconnect);
@@ -131,8 +127,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: `Um usuário escolheu o time ${payload.teamId}`,
       });
       
-      // Atualizar times com base nos dados recebidos
-      // Implementação simplificada para exemplo
+      dispatch({ type: 'UPDATE_TEAMS', payload: payload.teams });
     });
     
     websocketService.on('DRAFT_STARTED', (payload: DraftState) => {
@@ -182,7 +177,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     
     websocketService.on('DRAFT_RESET', () => {
-      // Implementação simplificada
+      dispatch({ type: 'SET_DRAFT_STATE', payload: null });
       
       toast({
         title: 'Draft Resetado',
@@ -227,7 +222,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [state.draftState]);
   
-  // Funções para interagir com o WebSocket
   const connectUser = (userId: string) => {
     websocketService.connect(userId);
     dispatch({ type: 'SET_USER_ID', payload: userId });
@@ -276,21 +270,18 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const resetDraft = () => {
     websocketService.sendEvent({
       type: 'DRAFT_RESET',
-      payload: {},
     });
   };
   
   const pauseDraft = () => {
     websocketService.sendEvent({
       type: 'DRAFT_PAUSED',
-      payload: {},
     });
   };
   
   const resumeDraft = () => {
     websocketService.sendEvent({
       type: 'DRAFT_RESUMED',
-      payload: {},
     });
   };
   
