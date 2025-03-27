@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Player, FieldPlayerStats, GKStats } from '../types';
 import { Input } from './ui/input';
 import { toast } from '@/hooks/use-toast';
 import ExampleCsv from './ExampleCsv';
+import { useRealTime } from '../context/RealTimeContext';
 
 interface CsvUploaderProps {
   onPlayersLoaded: (players: Player[]) => void;
@@ -14,6 +14,8 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onPlayersLoaded }) => {
   const [isLoadingGK, setIsLoadingGK] = useState(false);
   const [fieldPlayers, setFieldPlayers] = useState<Player[]>([]);
   const [goalkeepers, setGoalkeepers] = useState<Player[]>([]);
+  
+  const { uploadCsv } = useRealTime();
 
   const parseCsvToFieldPlayers = (csvContent: string): Player[] => {
     const lines = csvContent.split('\n');
@@ -48,7 +50,6 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onPlayersLoaded }) => {
       });
       
       if (player.name && player.position && player.team && player.ovr) {
-        // Ensure position is not GK
         if (player.position !== 'GK') {
           if (!player.stats || !player.stats.pace) {
             player.stats = {
@@ -101,7 +102,6 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onPlayersLoaded }) => {
       });
       
       if (player.name && player.position && player.team && player.ovr) {
-        // Ensure position is GK
         if (player.position === 'GK') {
           if (!player.stats || !player.stats.elasticity) {
             player.stats = {
@@ -136,13 +136,13 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onPlayersLoaded }) => {
         if (players.length > 0) {
           setFieldPlayers(players);
           
-          // Check if we have both types of players to combine
           if (goalkeepers.length > 0) {
             const allPlayers = [...players, ...goalkeepers];
             onPlayersLoaded(allPlayers);
+            uploadCsv(allPlayers);
             toast({
               title: "CSVs importados com sucesso",
-              description: `${players.length} jogadores de linha e ${goalkeepers.length} goleiros foram importados.`,
+              description: `${players.length} jogadores de linha e ${goalkeepers.length} goleiros foram importados e sincronizados com todos os usuários.`,
             });
           } else {
             toast({
@@ -196,13 +196,13 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onPlayersLoaded }) => {
         if (players.length > 0) {
           setGoalkeepers(players);
           
-          // Check if we have both types of players to combine
           if (fieldPlayers.length > 0) {
             const allPlayers = [...fieldPlayers, ...players];
             onPlayersLoaded(allPlayers);
+            uploadCsv(allPlayers);
             toast({
               title: "CSVs importados com sucesso",
-              description: `${fieldPlayers.length} jogadores de linha e ${players.length} goleiros foram importados.`,
+              description: `${fieldPlayers.length} jogadores de linha e ${players.length} goleiros foram importados e sincronizados com todos os usuários.`,
             });
           } else {
             toast({

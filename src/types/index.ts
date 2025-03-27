@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -76,4 +75,16 @@ export interface DraftState {
   availablePlayers: Player[];
   currentPick: number;
   status: DraftStatus;
+}
+
+export interface UserConnection {
+  userId: string;
+  userName: string;
+  connectedAt: Date;
+  isActive: boolean;
+}
+
+export interface RealTimeState {
+  connectedUsers: UserConnection[];
+  lastUpdate: Date;
 }

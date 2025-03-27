@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
+import { useRealTime } from '../context/RealTimeContext';
 
 interface RandomizerButtonProps {
   teams: Team[];
@@ -11,6 +12,7 @@ interface RandomizerButtonProps {
 
 const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize, disabled }) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const { randomizeTeams } = useRealTime();
 
   const handleRandomize = () => {
     if (disabled || isAnimating) return;
@@ -29,6 +31,9 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
       } else {
         clearInterval(animationInterval);
         setIsAnimating(false);
+        
+        // Sincronize a randomização final com todos os usuários
+        randomizeTeams(sequences[sequences.length - 1]);
       }
     }, 150);
   };
