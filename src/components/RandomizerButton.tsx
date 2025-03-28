@@ -4,7 +4,7 @@ import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
 import { useRealTime } from '../context/RealTimeContext';
 import { toast } from '@/hooks/use-toast';
-import { Trophy } from 'lucide-react';
+import { Trophy, Play } from 'lucide-react';
 
 interface RandomizerButtonProps {
   teams: Team[];

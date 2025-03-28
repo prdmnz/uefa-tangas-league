@@ -15,7 +15,7 @@ import ChampionsBanner from '../components/ChampionsBanner';
 import { toast } from '@/hooks/use-toast';
 import { useRealTime } from '../context/RealTimeContext';
 import { v4 as uuidv4 } from 'uuid';
-import { FileText, Users, Trophy, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Users, Trophy, Clock, AlertCircle, Play, Pause, RotateCcw } from 'lucide-react';
 
 const Index = () => {
   // Use the realtime context
