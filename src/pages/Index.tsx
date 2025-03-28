@@ -35,6 +35,23 @@ const Index = () => {
   // Estado local para o upload de CSV
   const [showCsvUploader, setShowCsvUploader] = useState(false);
   
+  // Calcular o tempo de início do pick atual
+  const [currentPickStartTime, setCurrentPickStartTime] = useState<Date | undefined>(undefined);
+  
+  // Atualizar o tempo de início quando o pick atual mudar
+  useEffect(() => {
+    if (draftState && draftState.status === DraftStatus.IN_PROGRESS) {
+      const currentPickObj = draftState.picks[draftState.currentPick];
+      if (currentPickObj && currentPickObj.timeStamp) {
+        setCurrentPickStartTime(new Date(currentPickObj.timeStamp));
+      } else {
+        setCurrentPickStartTime(new Date());
+      }
+    } else if (draftState && draftState.status !== DraftStatus.IN_PROGRESS) {
+      setCurrentPickStartTime(undefined);
+    }
+  }, [draftState?.currentPick, draftState?.status]);
+  
   // Local user ID gerado aleatoriamente (para identificação do usuário)
   const [localUserId, setLocalUserId] = useState<string | null>(null);
 
@@ -73,6 +90,8 @@ const Index = () => {
       description: "O tempo para escolha do time atual expirou.",
       variant: "destructive"
     });
+    
+    // Aqui poderia ter uma lógica para fazer um pick automático se o tempo esgotar
   };
 
   // Handle player selection
@@ -142,11 +161,15 @@ const Index = () => {
     };
     
     startDraftRealTime(updatedDraftState);
+    
+    // Definir o tempo de início do primeiro pick
+    setCurrentPickStartTime(new Date());
   };
 
   // Handle resetting the draft
   const handleResetDraft = () => {
     resetDraftRealTime();
+    setCurrentPickStartTime(undefined);
   };
 
   // Handle pausing the draft
@@ -157,6 +180,7 @@ const Index = () => {
   // Handle resuming the draft
   const handleResumeDraft = () => {
     resumeDraftRealTime();
+    setCurrentPickStartTime(new Date());
   };
 
   // Get current user's team
@@ -224,9 +248,11 @@ const Index = () => {
             <div className="w-32 flex items-center gap-2">
               <Clock size={16} className="text-blue-200" />
               <Timer 
+                key={`sticky-timer-${draftState.currentPick}`}
                 initialSeconds={draftState.settings.timePerPick} 
                 isRunning={draftState.status === DraftStatus.IN_PROGRESS}
                 onComplete={handleTimerComplete}
+                startTime={currentPickStartTime}
               />
             </div>
           </div>
@@ -307,6 +333,7 @@ const Index = () => {
                   isActive={draftState.status === DraftStatus.IN_PROGRESS}
                   timePerPick={draftState.settings.timePerPick}
                   onTimerComplete={handleTimerComplete}
+                  startTime={currentPickStartTime}
                 />
               )}
               

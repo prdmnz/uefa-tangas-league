@@ -6,14 +6,29 @@ interface TimerProps {
   initialSeconds: number;
   isRunning: boolean;
   onComplete: () => void;
+  startTime?: Date;
 }
 
-const Timer: React.FC<TimerProps> = ({ initialSeconds, isRunning, onComplete }) => {
+const Timer: React.FC<TimerProps> = ({ initialSeconds, isRunning, onComplete, startTime }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
 
+  // Se houver um startTime, calcule o tempo restante
   useEffect(() => {
-    setSeconds(initialSeconds);
-  }, [initialSeconds]);
+    if (startTime) {
+      const now = new Date();
+      const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+      const remainingSeconds = Math.max(0, initialSeconds - elapsedSeconds);
+      
+      setSeconds(remainingSeconds);
+      
+      // Se o tempo já acabou, acione o callback de conclusão
+      if (remainingSeconds <= 0 && isRunning) {
+        onComplete();
+      }
+    } else {
+      setSeconds(initialSeconds);
+    }
+  }, [initialSeconds, startTime, isRunning, onComplete]);
 
   useEffect(() => {
     let interval: number | undefined;

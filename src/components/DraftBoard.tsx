@@ -10,6 +10,7 @@ interface DraftBoardProps {
   isActive: boolean;
   timePerPick: number;
   onTimerComplete: () => void;
+  startTime?: Date;
 }
 
 const DraftBoard: React.FC<DraftBoardProps> = ({
@@ -17,7 +18,8 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
   currentPick,
   isActive,
   timePerPick,
-  onTimerComplete
+  onTimerComplete,
+  startTime
 }) => {
   // Determine which picks to show
   const visiblePicks = picks.slice(0, currentPick + 10);
@@ -31,9 +33,11 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
           {currentPick < picks.length && (
             <div className="w-48">
               <Timer 
+                key={`draftboard-timer-${currentPick}`}
                 initialSeconds={timePerPick} 
                 isRunning={isActive}
                 onComplete={onTimerComplete}
+                startTime={startTime}
               />
             </div>
           )}
@@ -43,7 +47,7 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
       <div className="scrollbar-thin overflow-y-auto" style={{ maxHeight: "60vh" }}>
         <table className="w-full">
           <thead className="bg-gray-50 sticky top-[73px] z-10">
-            <tr>
+            <tr className="border-b border-gray-200">
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                 Pick
               </th>
