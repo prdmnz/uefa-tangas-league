@@ -65,7 +65,7 @@ const DraftBoard: React.FC<DraftBoardProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-200 relative">
             {visiblePicks.map((pick, index) => {
               const isCurrentPick = index === currentPick;
               const positionColor = pick.player ? getPositionColor(pick.player.position) : '';

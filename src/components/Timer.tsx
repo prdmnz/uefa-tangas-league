@@ -12,24 +12,35 @@ interface TimerProps {
 const Timer: React.FC<TimerProps> = ({ initialSeconds, isRunning, onComplete, startTime }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
 
-  // Se houver um startTime, calcule o tempo restante
+  // Calculate the remaining time based on startTime
   useEffect(() => {
     if (startTime) {
-      const now = new Date();
-      const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-      const remainingSeconds = Math.max(0, initialSeconds - elapsedSeconds);
+      const calculateRemainingTime = () => {
+        const now = new Date();
+        const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const remainingSeconds = Math.max(0, initialSeconds - elapsedSeconds);
+        
+        setSeconds(remainingSeconds);
+        
+        // If the time has expired and the timer is running, trigger the completion callback
+        if (remainingSeconds <= 0 && isRunning) {
+          onComplete();
+        }
+      };
+
+      // Calculate the initial remaining time
+      calculateRemainingTime();
       
-      setSeconds(remainingSeconds);
+      // Don't set up an interval if already expired
+      if (seconds <= 0) return;
       
-      // Se o tempo já acabou, acione o callback de conclusão
-      if (remainingSeconds <= 0 && isRunning) {
-        onComplete();
-      }
     } else {
+      // If no startTime is provided, just use the initialSeconds
       setSeconds(initialSeconds);
     }
   }, [initialSeconds, startTime, isRunning, onComplete]);
 
+  // Regular countdown timer when running
   useEffect(() => {
     let interval: number | undefined;
 
