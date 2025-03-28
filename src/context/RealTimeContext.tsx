@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useReducer, useState } from 'react';
 import { websocketService, WebSocketEvent } from '../services/websocketService';
 import { DraftState, Team, Player, DraftStatus, RealTimeState } from '../types';
@@ -91,12 +90,98 @@ function realTimeReducer(state: RealTimeReducerState, action: RealTimeAction): R
 export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(realTimeReducer, initialState);
   const [realTimeLoaded, setRealTimeLoaded] = useState(false);
+  const [draftStateData, setDraftStateData] = useState<any>(null);
 
-  // Função para inicializar e carregar os dados do Supabase
+  const handleConnect = () => {
+    dispatch({ type: 'SET_CONNECTED', payload: true });
+    toast({
+      title: 'Conectado',
+      description: 'Você está conectado ao servidor em tempo real.',
+    });
+  };
+
+  const handleDisconnect = () => {
+    dispatch({ type: 'SET_CONNECTED', payload: false });
+    toast({
+      title: 'Desconectado',
+      description: 'Você foi desconectado do servidor em tempo real.',
+      variant: 'destructive',
+    });
+  };
+
+  const handleReconnectFailed = () => {
+    toast({
+      title: 'Erro de Conexão',
+      description: 'Não foi possível reconectar ao servidor após várias tentativas.',
+      variant: 'destructive',
+    });
+  };
+
+  useEffect(() => {
+    initializeSupabaseData();
+    
+    const teamsChannel = supabase
+      .channel('public:teams')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'teams' }, 
+        (payload) => {
+          console.log('Teams changed:', payload);
+          initializeSupabaseData();
+        }
+      )
+      .subscribe();
+    
+    const draftStateChannel = supabase
+      .channel('public:draft_state')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'draft_state' }, 
+        (payload) => {
+          console.log('Draft state changed:', payload);
+          initializeSupabaseData();
+        }
+      )
+      .subscribe();
+
+    const draftPicksChannel = supabase
+      .channel('public:draft_picks')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'draft_picks' }, 
+        (payload) => {
+          console.log('Draft picks changed:', payload);
+          initializeSupabaseData();
+        }
+      )
+      .subscribe();
+
+    const playersChannel = supabase
+      .channel('public:players')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'field_players' }, 
+        (payload) => {
+          console.log('Field players changed:', payload);
+          initializeSupabaseData();
+        }
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'goalkeepers' },
+        (payload) => {
+          console.log('Goalkeepers changed:', payload);
+          initializeSupabaseData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(teamsChannel);
+      supabase.removeChannel(draftStateChannel);
+      supabase.removeChannel(draftPicksChannel);
+      supabase.removeChannel(playersChannel);
+    };
+  }, []);
+
   const initializeSupabaseData = async () => {
     try {
-      // Carregar estado atual do draft
-      const { data: draftStateData, error: draftStateError } = await supabase
+      const { data: draftData, error: draftStateError } = await supabase
         .from('draft_state')
         .select('*')
         .limit(1)
@@ -107,7 +192,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Carregar times
+      setDraftStateData(draftData);
+
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('*')
@@ -118,7 +204,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Carregar picks existentes
       const { data: picksData, error: picksError } = await supabase
         .from('draft_picks')
         .select('*')
@@ -129,7 +214,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Carregar jogadores de campo
       const { data: fieldPlayersData, error: fieldPlayersError } = await supabase
         .from('field_players')
         .select('*')
@@ -140,7 +224,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Carregar goleiros
       const { data: goalkeepersData, error: goalkeepersError } = await supabase
         .from('goalkeepers')
         .select('*')
@@ -151,16 +234,14 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Converter dados para o formato esperado pela aplicação
       const teams = teamsData.map(team => ({
         id: team.id,
         name: team.name,
         draftPosition: team.draft_position,
         assignedTo: team.assigned_to,
-        players: [] // Vamos preencher depois com base nos picks
+        players: []
       }));
 
-      // Combinar jogadores de campo e goleiros
       const allPlayers = [
         ...fieldPlayersData.map(player => ({
           id: player.id,
@@ -199,12 +280,10 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }))
       ];
 
-      // Processar picks e atualizar times com jogadores escolhidos
       const picks = picksData.map(pick => {
         const team = teams.find(t => t.id === pick.team_id) || teams[0];
         const player = pick.player_id ? allPlayers.find(p => p.id === pick.player_id) || null : null;
         
-        // Adicionar jogador ao time se ele existir
         if (player && team) {
           const teamIndex = teams.findIndex(t => t.id === team.id);
           if (teamIndex !== -1) {
@@ -230,21 +309,20 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
       });
 
-      // Construir estado do draft
       const draftState: DraftState = {
         settings: {
           numberOfTeams: teams.length,
-          numberOfRounds: draftStateData.number_of_rounds,
-          timePerPick: draftStateData.time_per_pick,
-          snakeFormat: draftStateData.snake_format
+          numberOfRounds: draftData.number_of_rounds,
+          timePerPick: draftData.time_per_pick,
+          snakeFormat: draftData.snake_format
         },
         teams,
         picks,
         availablePlayers: allPlayers.filter(player => 
           !picks.some(pick => pick.player && pick.player.id === player.id)
         ),
-        currentPick: draftStateData.current_pick,
-        status: draftStateData.status as DraftStatus
+        currentPick: draftData.current_pick,
+        status: draftData.status as DraftStatus
       };
 
       dispatch({ type: 'SET_DRAFT_STATE', payload: draftState });
@@ -252,101 +330,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Erro ao inicializar dados do Supabase:', error);
     }
-  };
-
-  // Configurar ouvintes do Supabase
-  useEffect(() => {
-    // Inicializar dados
-    initializeSupabaseData();
-    
-    // Configura canais Realtime para atualização em tempo real
-    const teamsChannel = supabase
-      .channel('public:teams')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'teams' }, 
-        (payload) => {
-          console.log('Teams changed:', payload);
-          // Recarregar times quando houver mudanças
-          initializeSupabaseData();
-        }
-      )
-      .subscribe();
-    
-    const draftStateChannel = supabase
-      .channel('public:draft_state')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'draft_state' }, 
-        (payload) => {
-          console.log('Draft state changed:', payload);
-          // Recarregar estado do draft quando houver mudanças
-          initializeSupabaseData();
-        }
-      )
-      .subscribe();
-
-    const draftPicksChannel = supabase
-      .channel('public:draft_picks')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'draft_picks' }, 
-        (payload) => {
-          console.log('Draft picks changed:', payload);
-          // Recarregar picks quando houver mudanças
-          initializeSupabaseData();
-        }
-      )
-      .subscribe();
-
-    const playersChannel = supabase
-      .channel('public:players')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'field_players' }, 
-        (payload) => {
-          console.log('Field players changed:', payload);
-          // Recarregar jogadores quando houver mudanças
-          initializeSupabaseData();
-        }
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'goalkeepers' },
-        (payload) => {
-          console.log('Goalkeepers changed:', payload);
-          // Recarregar jogadores quando houver mudanças
-          initializeSupabaseData();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(teamsChannel);
-      supabase.removeChannel(draftStateChannel);
-      supabase.removeChannel(draftPicksChannel);
-      supabase.removeChannel(playersChannel);
-    };
-  }, []);
-
-  const handleConnect = () => {
-    dispatch({ type: 'SET_CONNECTED', payload: true });
-    toast({
-      title: 'Conectado',
-      description: 'Você está conectado ao servidor em tempo real.',
-    });
-  };
-
-  const handleDisconnect = () => {
-    dispatch({ type: 'SET_CONNECTED', payload: false });
-    toast({
-      title: 'Desconectado',
-      description: 'Você foi desconectado do servidor em tempo real.',
-      variant: 'destructive',
-    });
-  };
-
-  const handleReconnectFailed = () => {
-    toast({
-      title: 'Erro de Conexão',
-      description: 'Não foi possível reconectar ao servidor após várias tentativas.',
-      variant: 'destructive',
-    });
   };
 
   useEffect(() => {
@@ -456,11 +439,9 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       websocketService.off('DRAFT_RESUMED', () => {});
     };
   }, [state.draftState]);
-  
-  // Métodos para interagir com o Supabase
+
   const connectUser = async (userId: string) => {
     try {
-      // Registrar usuário conectado
       const { data, error } = await supabase
         .from('connected_users')
         .upsert({ 
@@ -485,10 +466,9 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao conectar usuário:', error);
     }
   };
-  
+
   const selectTeam = async (userId: string, teamId: string) => {
     try {
-      // Atualizar time selecionado
       const { error } = await supabase
         .from('teams')
         .update({ assigned_to: userId })
@@ -512,10 +492,18 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao selecionar time:', error);
     }
   };
-  
+
   const startDraft = async (draftState: DraftState) => {
     try {
-      // Atualizar estado do draft - Fixed the update query to include WHERE clause
+      if (!draftStateData || !draftStateData.id) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível iniciar o draft. ID do estado não encontrado.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('draft_state')
         .update({ 
@@ -523,7 +511,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           current_pick: 0,
           updated_at: new Date().toISOString()
         })
-        .eq('id', draftStateData?.id || '');  // Add WHERE clause with the draft state ID
+        .eq('id', draftStateData.id);
       
       if (error) {
         console.error('Erro ao iniciar draft:', error);
@@ -535,10 +523,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Limpar picks anteriores se houver
       await supabase.from('draft_picks').delete().neq('id', 'placeholder');
 
-      // Criar novos picks
       for (const pick of draftState.picks) {
         await supabase.from('draft_picks').insert({
           overall: pick.overall,
@@ -557,7 +543,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao iniciar draft:', error);
     }
   };
-  
+
   const makePick = async (pickIndex: number, playerId: string) => {
     try {
       if (!state.draftState || pickIndex >= state.draftState.picks.length) {
@@ -566,7 +552,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       const pick = state.draftState.picks[pickIndex];
       
-      // Atualizar pick no banco
       const { error } = await supabase
         .from('draft_picks')
         .update({ 
@@ -585,7 +570,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
       
-      // Atualizar current_pick no estado do draft
       await supabase
         .from('draft_state')
         .update({ 
@@ -594,7 +578,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ? DraftStatus.COMPLETED 
             : DraftStatus.IN_PROGRESS
         })
-        .eq('id', draftStateData?.id || '');  // Add WHERE clause with the draft state ID
+        .eq('id', draftStateData.id);
       
       toast({
         title: 'Jogador Selecionado',
@@ -604,10 +588,9 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao fazer pick:', error);
     }
   };
-  
+
   const randomizeTeams = async (teams: Team[]) => {
     try {
-      // Atualizar posições no draft
       for (const team of teams) {
         await supabase
           .from('teams')
@@ -623,14 +606,12 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao randomizar times:', error);
     }
   };
-  
+
   const processPlayers = async (players: Player[]) => {
     try {
-      // Limpar jogadores existentes
       await supabase.from('field_players').delete().neq('id', 'placeholder');
       await supabase.from('goalkeepers').delete().neq('id', 'placeholder');
       
-      // Inserir novos jogadores
       for (const player of players) {
         if (player.position === 'GK') {
           const { elasticity, handling, shooting, reflexes, speed, positioning } = 
@@ -677,7 +658,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao processar jogadores:', error);
     }
   };
-  
+
   const uploadCsv = async (players: Player[]) => {
     try {
       await processPlayers(players);
@@ -690,35 +671,47 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao importar CSV:', error);
     }
   };
-  
+
   const resetDraft = async () => {
     try {
-      // Get the draft state ID first
-      const { data: draftStateData, error: draftStateError } = await supabase
-        .from('draft_state')
-        .select('id')
-        .limit(1)
-        .single();
-      
-      if (draftStateError) {
-        console.error('Erro ao obter ID do draft state:', draftStateError);
-        return;
+      if (!draftStateData || !draftStateData.id) {
+        const { data, error } = await supabase
+          .from('draft_state')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        if (error || !data) {
+          console.error('Erro ao obter ID do draft state:', error);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível resetar o draft. ID do estado não encontrado.',
+            variant: 'destructive'
+          });
+          return;
+        }
+        
+        await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.NOT_STARTED,
+            current_pick: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.id);
+      } else {
+        await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.NOT_STARTED,
+            current_pick: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', draftStateData.id);
       }
       
-      // Resetar estado do draft
-      await supabase
-        .from('draft_state')
-        .update({ 
-          status: DraftStatus.NOT_STARTED,
-          current_pick: 0,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
-      
-      // Limpar picks
       await supabase.from('draft_picks').delete().neq('id', 'placeholder');
       
-      // Resetar posições dos times e limpar assignments
       await supabase
         .from('teams')
         .update({ 
@@ -734,33 +727,51 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao resetar draft:', error);
     }
   };
-  
+
   const pauseDraft = async () => {
     try {
-      // Get the draft state ID first
-      const { data: draftStateData, error: draftStateError } = await supabase
-        .from('draft_state')
-        .select('id')
-        .limit(1)
-        .single();
-      
-      if (draftStateError) {
-        console.error('Erro ao obter ID do draft state:', draftStateError);
-        return;
-      }
-      
-      // Pausar draft
-      const { error } = await supabase
-        .from('draft_state')
-        .update({ 
-          status: DraftStatus.PAUSED,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
-      
-      if (error) {
-        console.error('Erro ao pausar draft:', error);
-        return;
+      if (!draftStateData || !draftStateData.id) {
+        const { data, error } = await supabase
+          .from('draft_state')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        if (error || !data) {
+          console.error('Erro ao obter ID do draft state:', error);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível pausar o draft. ID do estado não encontrado.',
+            variant: 'destructive'
+          });
+          return;
+        }
+        
+        const { error: updateError } = await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.PAUSED,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.id);
+        
+        if (updateError) {
+          console.error('Erro ao pausar draft:', updateError);
+          return;
+        }
+      } else {
+        const { error } = await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.PAUSED,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', draftStateData.id);
+        
+        if (error) {
+          console.error('Erro ao pausar draft:', error);
+          return;
+        }
       }
       
       toast({
@@ -771,33 +782,51 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao pausar draft:', error);
     }
   };
-  
+
   const resumeDraft = async () => {
     try {
-      // Get the draft state ID first
-      const { data: draftStateData, error: draftStateError } = await supabase
-        .from('draft_state')
-        .select('id')
-        .limit(1)
-        .single();
-      
-      if (draftStateError) {
-        console.error('Erro ao obter ID do draft state:', draftStateError);
-        return;
-      }
-      
-      // Retomar draft
-      const { error } = await supabase
-        .from('draft_state')
-        .update({ 
-          status: DraftStatus.IN_PROGRESS,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', draftStateData.id);  // Add WHERE clause with the draft state ID
-      
-      if (error) {
-        console.error('Erro ao retomar draft:', error);
-        return;
+      if (!draftStateData || !draftStateData.id) {
+        const { data, error } = await supabase
+          .from('draft_state')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        if (error || !data) {
+          console.error('Erro ao obter ID do draft state:', error);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível retomar o draft. ID do estado não encontrado.',
+            variant: 'destructive'
+          });
+          return;
+        }
+        
+        const { error: updateError } = await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.IN_PROGRESS,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.id);
+        
+        if (updateError) {
+          console.error('Erro ao retomar draft:', updateError);
+          return;
+        }
+      } else {
+        const { error } = await supabase
+          .from('draft_state')
+          .update({ 
+            status: DraftStatus.IN_PROGRESS,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', draftStateData.id);
+        
+        if (error) {
+          console.error('Erro ao retomar draft:', error);
+          return;
+        }
       }
       
       toast({
@@ -808,10 +837,9 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Erro ao retomar draft:', error);
     }
   };
-  
+
   const disconnect = async () => {
     if (state.userId) {
-      // Atualizar status do usuário para inativo
       await supabase
         .from('connected_users')
         .update({ last_active: new Date().toISOString() })
@@ -821,10 +849,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_CONNECTED', payload: false });
     dispatch({ type: 'SET_USER_ID', payload: null });
   };
-  
-  // Fix variable declaration to prevent errors
-  let draftStateData: any = null;
-  
+
   const value = {
     isConnected: state.isConnected,
     userId: state.userId,
@@ -840,7 +865,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     resumeDraft,
     disconnect,
   };
-  
+
   return (
     <RealTimeContext.Provider value={value}>
       {children}

@@ -44,7 +44,7 @@ const ChampionsBanner = () => {
           <div className="flex items-center justify-center gap-3 mt-3">
             <div className="h-1 w-16 bg-gradient-to-r from-transparent to-blue-300 rounded-full" />
             <div className="px-3 py-1 bg-blue-700/50 backdrop-blur-sm text-white text-xs font-semibold tracking-wider uppercase rounded-full border border-blue-500/30">
-              Temporada 2023-24
+              Temporada 2025
             </div>
             <div className="h-1 w-16 bg-gradient-to-l from-transparent to-blue-300 rounded-full" />
           </div>
