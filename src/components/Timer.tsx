@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { formatTime } from '../utils/draftUtils';
 
 interface TimerProps {
@@ -11,58 +11,65 @@ interface TimerProps {
 
 const Timer: React.FC<TimerProps> = ({ initialSeconds, isRunning, onComplete, startTime }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
+  const intervalRef = useRef<number>();
+  const hasExpiredRef = useRef(false);
 
   // Calculate the remaining time based on startTime
   useEffect(() => {
-    if (startTime) {
-      const calculateRemainingTime = () => {
-        const now = new Date();
-        const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-        const remainingSeconds = Math.max(0, initialSeconds - elapsedSeconds);
-        
-        setSeconds(remainingSeconds);
-        
-        // If the time has expired and the timer is running, trigger the completion callback
-        if (remainingSeconds <= 0 && isRunning) {
-          onComplete();
-        }
-      };
-
-      // Calculate the initial remaining time
-      calculateRemainingTime();
-      
-      // Don't set up an interval if already expired
-      if (seconds <= 0) return;
-      
-    } else {
-      // If no startTime is provided, just use the initialSeconds
-      setSeconds(initialSeconds);
+    // Clear any existing interval when props change
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = undefined;
     }
-  }, [initialSeconds, startTime, isRunning, onComplete]);
+    
+    // Reset expired flag when getting new props
+    hasExpiredRef.current = false;
+    
+    const calculateRemainingTime = () => {
+      if (!startTime) {
+        setSeconds(initialSeconds);
+        return initialSeconds;
+      }
+      
+      const now = new Date();
+      const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+      const remainingSeconds = Math.max(0, initialSeconds - elapsedSeconds);
+      
+      setSeconds(remainingSeconds);
+      
+      // Check if timer has expired
+      if (remainingSeconds <= 0 && isRunning && !hasExpiredRef.current) {
+        hasExpiredRef.current = true;
+        onComplete();
+      }
+      
+      return remainingSeconds;
+    };
 
-  // Regular countdown timer when running
-  useEffect(() => {
-    let interval: number | undefined;
-
-    if (isRunning && seconds > 0) {
-      interval = window.setInterval(() => {
-        setSeconds(prevSeconds => {
-          if (prevSeconds <= 1) {
-            clearInterval(interval);
-            onComplete();
-            return 0;
-          }
-          return prevSeconds - 1;
-        });
+    // Calculate initial time
+    const initialRemaining = calculateRemainingTime();
+    
+    // Don't set up interval if already expired
+    if (initialRemaining <= 0) {
+      return;
+    }
+    
+    // Set up interval for countdown
+    if (isRunning) {
+      intervalRef.current = window.setInterval(() => {
+        const remaining = calculateRemainingTime();
+        if (remaining <= 0 && intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
       }, 1000);
-    } else if (!isRunning) {
-      clearInterval(interval);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
-  }, [isRunning, seconds, onComplete]);
+  }, [initialSeconds, isRunning, onComplete, startTime]);
 
   // Calculate percentage for progress
   const percentage = (seconds / initialSeconds) * 100;
