@@ -875,8 +875,14 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
 export const useRealTime = () => {
   const context = useContext(RealTimeContext);
-  if (context === undefined) {
-    throw new Error('useRealTime must be used within a RealTimeProvider');
+  
+  if (!context) {
+    throw new Error("useRealTime must be used within a RealTimeProvider");
   }
+  
+  useEffect(() => {
+    console.log('Real-time context state:', context);
+  }, [context.draftState, context.userId]);
+  
   return context;
 };

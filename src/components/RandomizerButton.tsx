@@ -4,7 +4,7 @@ import { visualRandomizer } from '../utils/draftUtils';
 import { Team } from '../types';
 import { useRealTime } from '../context/RealTimeContext';
 import { toast } from '@/hooks/use-toast';
-import { Trophy, Play } from 'lucide-react';
+import { Trophy, Dices, Sparkles } from 'lucide-react';
 
 interface RandomizerButtonProps {
   teams: Team[];
@@ -48,6 +48,11 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
         // Synchronize the final randomization with all users via Supabase
         try {
           randomizeTeams(sequences[sequences.length - 1]);
+          
+          toast({
+            title: 'Ordem randomizada!',
+            description: 'A ordem do draft foi definida com sucesso',
+          });
         } catch (error) {
           console.error('Erro ao sincronizar randomização:', error);
           toast({
@@ -67,15 +72,25 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
       className={`
         relative overflow-hidden button-transition focus-ring
         px-4 py-2.5 rounded-lg font-medium text-white
-        flex items-center justify-center gap-2
+        flex items-center justify-center gap-2 min-w-44
         ${disabled 
           ? 'bg-gray-400 cursor-not-allowed' 
-          : 'bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 active:from-yellow-700 active:to-amber-800 shadow-md hover:shadow-lg'}
+          : 'bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:from-amber-700 active:to-amber-800 shadow-md hover:shadow-lg'}
         ${isAnimating ? 'shimmer' : ''}
       `}
     >
-      <Trophy size={18} className="animate-pulse" />
-      {isAnimating ? 'Sorteando...' : 'Sortear Ordem do Draft'}
+      {isAnimating ? (
+        <>
+          <Dices size={18} className="animate-spin" />
+          Sorteando...
+          <Sparkles size={16} className="absolute top-1 right-3 animate-pulse text-yellow-200" />
+        </>
+      ) : (
+        <>
+          <Trophy size={18} className="text-yellow-200" />
+          Sortear Ordem do Draft
+        </>
+      )}
     </button>
   );
 };
