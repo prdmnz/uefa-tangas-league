@@ -75,7 +75,11 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({
     }
   };
 
-  const availableTeams = teams.filter(team => !team.assignedTo);
+  // Filter out teams with empty IDs to prevent SelectItem errors
+  const availableTeams = teams
+    .filter(team => !team.assignedTo && team.id && team.id.trim() !== '')
+    .map(team => ({ ...team }));
+    
   const assignedTeams = teams.filter(team => team.assignedTo);
 
   return (
@@ -140,11 +144,17 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({
               <SelectValue placeholder="Selecione um time" />
             </SelectTrigger>
             <SelectContent>
-              {availableTeams.map(team => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
+              {availableTeams.length > 0 ? (
+                availableTeams.map(team => (
+                  <SelectItem key={team.id} value={team.id || `team-${team.name}`}>
+                    {team.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-teams-available" disabled>
+                  Nenhum time disponível
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
         </div>
