@@ -59,8 +59,10 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
     });
   };
 
-  const availableTeams = teams.filter(team => !team.assignedTo);
-  const assignedTeams = teams.filter(team => team.assignedTo);
+  // Filter out teams with empty IDs and then determine available teams
+  const validTeams = teams.filter(team => team.id && team.id.trim() !== '');
+  const availableTeams = validTeams.filter(team => !team.assignedTo);
+  const assignedTeams = validTeams.filter(team => team.assignedTo);
 
   return (
     <div className="glass-card p-6 animate-fade-in bg-gradient-to-br from-white/90 to-blue-50/90 shadow-xl">
@@ -96,7 +98,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
             </SelectTrigger>
             <SelectContent>
               {availableTeams.map(team => (
-                <SelectItem key={team.id} value={team.id}>
+                <SelectItem key={team.id} value={team.id || `team-${team.name}`}>
                   {team.name}
                 </SelectItem>
               ))}
@@ -132,7 +134,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
         </div>
       )}
       
-      {assignedTeams.length === teams.length && (
+      {assignedTeams.length === validTeams.length && (
         <div className="mt-7">
           <Button
             onClick={onStartDraft}
