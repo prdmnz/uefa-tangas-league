@@ -34,20 +34,6 @@ const Index = () => {
   const [currentPickStartTime, setCurrentPickStartTime] = useState<Date | undefined>(undefined);
   const [localUserId, setLocalUserId] = useState<string | null>(null);
 
-  const handleTeamsCountChange = (count: number) => {
-    if (!draftState) return;
-    
-    console.log(`Changing teams count to: ${count}`);
-    
-    // Use the resetDraft function with the custom config
-    resetDraftRealTime({ numberOfTeams: count });
-    
-    toast({
-      title: "Configuração atualizada",
-      description: `O draft agora será realizado com ${count} times.`,
-    });
-  };
-
   useEffect(() => {
     if (draftState && draftState.status === DraftStatus.IN_PROGRESS) {
       const currentPickObj = draftState.picks[draftState.currentPick];
@@ -281,7 +267,6 @@ const Index = () => {
                 teams={draftState.teams}
                 onTeamSelect={handleTeamSelect}
                 onStartDraft={handleStartDraft}
-                onTeamsCountChange={handleTeamsCountChange}
               />
             </div>
           </div>
@@ -298,7 +283,7 @@ const Index = () => {
                   </h2>
                   <p className="text-gray-600 mb-6">
                     {userTeam ? `Você selecionou ${userTeam.name}. ` : ''}
-                    Este draft utiliza um formato snake com {draftState.teams.length} times e {draftState.settings.numberOfRounds} rodadas. Antes de começar, você precisa sortear a ordem do draft.
+                    Este draft utiliza um formato snake com 9 times e 18 rodadas. Antes de começar, você precisa sortear a ordem do draft.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Team } from '../types';
 import { toast } from '@/hooks/use-toast';
-import { UserPlus, Users, Check, Trophy, ShieldAlert, Settings } from 'lucide-react';
+import { UserPlus, Users, Check, Trophy, ShieldAlert } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   Select,
@@ -11,24 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 
 interface TeamSelectionProps {
   teams: Team[];
   onTeamSelect: (userName: string, teamId: string) => void;
   onStartDraft: () => void;
-  onTeamsCountChange?: (count: number) => void;
 }
 
-const TeamSelection: React.FC<TeamSelectionProps> = ({ 
-  teams, 
-  onTeamSelect, 
-  onStartDraft, 
-  onTeamsCountChange 
-}) => {
+const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onStartDraft }) => {
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
-  const [teamsCount, setTeamsCount] = useState<number>(teams.length);
 
   const handleTeamSelect = () => {
     if (!selectedTeam) {
@@ -67,19 +59,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({
     });
   };
 
-  const handleTeamsCountChange = (value: number[]) => {
-    const newCount = value[0];
-    setTeamsCount(newCount);
-    if (onTeamsCountChange) {
-      onTeamsCountChange(newCount);
-    }
-  };
-
-  // Filter out teams with empty IDs to prevent SelectItem errors
-  const availableTeams = teams
-    .filter(team => !team.assignedTo && team.id && team.id.trim() !== '')
-    .map(team => ({ ...team }));
-    
+  const availableTeams = teams.filter(team => !team.assignedTo);
   const assignedTeams = teams.filter(team => team.assignedTo);
 
   return (
@@ -88,35 +68,6 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({
         <Trophy size={22} className="text-amber-500" />
         Selecione Seu Time
       </h2>
-      
-      {onTeamsCountChange && (
-        <div className="mb-6 p-4 bg-blue-50/80 rounded-lg border border-blue-100">
-          <h3 className="text-md font-medium mb-3 flex items-center gap-2 text-blue-700">
-            <Settings size={18} />
-            Configurações do Draft
-          </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número de Times: {teamsCount}
-              </label>
-              <Slider
-                defaultValue={[teamsCount]}
-                max={9}
-                min={2}
-                step={1}
-                onValueChange={handleTeamsCountChange}
-                className="py-4"
-              />
-              <div className="flex justify-between text-xs text-gray-500 px-1 mt-1">
-                <span>2</span>
-                <span>9</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       
       <div className="space-y-5">
         <div>
@@ -144,17 +95,11 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({
               <SelectValue placeholder="Selecione um time" />
             </SelectTrigger>
             <SelectContent>
-              {availableTeams.length > 0 ? (
-                availableTeams.map(team => (
-                  <SelectItem key={team.id} value={team.id || `team-${team.name}`}>
-                    {team.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="no-teams-available" disabled>
-                  Nenhum time disponível
+              {availableTeams.map(team => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
                 </SelectItem>
-              )}
+              ))}
             </SelectContent>
           </Select>
         </div>

@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -44,7 +43,6 @@ export interface Team {
   draftPosition: number | null;
   players: TeamPlayer[];
   assignedTo: string | null; // User who selected this team
-  isActive?: boolean; // Adding this property to match the database field
 }
 
 export interface DraftPick {

@@ -14,7 +14,7 @@ interface RealTimeContextState {
   makePick: (pickIndex: number, playerId: string) => void;
   randomizeTeams: (teams: Team[]) => void;
   uploadCsv: (players: Player[]) => void;
-  resetDraft: (customConfig?: { numberOfTeams?: number }) => void;
+  resetDraft: () => void;
   pauseDraft: () => void;
   resumeDraft: () => void;
   disconnect: () => void;
@@ -22,6 +22,7 @@ interface RealTimeContextState {
 
 const RealTimeContext = createContext<RealTimeContextState | undefined>(undefined);
 
+// Reducer to manage shared state
 type RealTimeAction =
   | { type: 'SET_CONNECTED'; payload: boolean }
   | { type: 'SET_USER_ID'; payload: string | null }
@@ -494,6 +495,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
       
+      // Update local state immediately for better user experience
       if (state.draftState) {
         const updatedTeams = state.draftState.teams.map(team => 
           team.id === teamId ? { ...team, assignedTo: userName } : team
@@ -698,7 +700,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const resetDraft = async (customConfig?: { numberOfTeams?: number }) => {
+  const resetDraft = async () => {
     try {
       if (!draftStateData || !draftStateData.id) {
         const { data, error } = await supabase
@@ -717,70 +719,33 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return;
         }
         
-        const numberOfTeams = customConfig?.numberOfTeams;
         await supabase
           .from('draft_state')
           .update({ 
             status: DraftStatus.NOT_STARTED,
             current_pick: 0,
-            updated_at: new Date().toISOString(),
-            ...(numberOfTeams && { number_of_teams: numberOfTeams })
+            updated_at: new Date().toISOString()
           })
           .eq('id', data.id);
       } else {
-        const numberOfTeams = customConfig?.numberOfTeams;
         await supabase
           .from('draft_state')
           .update({ 
             status: DraftStatus.NOT_STARTED,
             current_pick: 0,
-            updated_at: new Date().toISOString(),
-            ...(numberOfTeams && { number_of_teams: numberOfTeams })
+            updated_at: new Date().toISOString()
           })
           .eq('id', draftStateData.id);
       }
       
       await supabase.from('draft_picks').delete().neq('id', 'placeholder');
       
-      if (customConfig?.numberOfTeams) {
-        const { data: teamsData } = await supabase
-          .from('teams')
-          .select('*')
-          .order('id')
-          .limit(customConfig.numberOfTeams);
-          
-        if (teamsData) {
-          const teamIds = teamsData.map(team => team.id);
-          
-          await supabase
-            .from('teams')
-            .update({ 
-              draft_position: null,
-              assigned_to: null
-            });
-            
-          await supabase
-            .from('teams')
-            .update({
-              assigned_to: null
-            })
-            .in('id', teamIds);
-            
-          await supabase
-            .from('teams')
-            .update({
-              assigned_to: null
-            })
-            .not('id', 'in', teamIds);
-        }
-      } else {
-        await supabase
-          .from('teams')
-          .update({ 
-            draft_position: null,
-            assigned_to: null
-          });
-      }
+      await supabase
+        .from('teams')
+        .update({ 
+          draft_position: null,
+          assigned_to: null
+        });
       
       toast({
         title: 'Draft Resetado',
