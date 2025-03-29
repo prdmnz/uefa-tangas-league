@@ -39,18 +39,8 @@ const Index = () => {
     
     console.log(`Changing teams count to: ${count}`);
     
-    const filteredTeams = draftState.teams.slice(0, count);
-    
-    const updatedDraftState: DraftState = {
-      ...draftState,
-      teams: filteredTeams,
-      settings: {
-        ...draftState.settings,
-        numberOfTeams: count
-      }
-    };
-    
-    resetDraftRealTime(updatedDraftState);
+    // Use the resetDraft function with the custom config
+    resetDraftRealTime({ numberOfTeams: count });
     
     toast({
       title: "Configuração atualizada",
