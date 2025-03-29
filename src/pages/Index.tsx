@@ -123,6 +123,9 @@ const Index = () => {
   };
 
   const handleRandomize = (randomizedTeams: Team[]) => {
+    if (draftState) {
+      randomizeTeamsRealTime(randomizedTeams);
+    }
   };
 
   const handleTeamSelect = (userName: string, teamId: string) => {
@@ -137,7 +140,19 @@ const Index = () => {
   const handleStartDraft = () => {
     if (!draftState) return;
     
-    if (draftState.teams.some(team => team.draftPosition === null)) {
+    const assignedTeams = draftState.teams.filter(team => team.assignedTo);
+    
+    if (assignedTeams.length < 2) {
+      toast({
+        title: "Times insuficientes",
+        description: "Você precisa de pelo menos 2 times selecionados para iniciar o draft.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const teamsNeedingPosition = assignedTeams.filter(team => team.draftPosition === null);
+    if (teamsNeedingPosition.length > 0) {
       toast({
         title: "Times não sorteados",
         description: "Você precisa sortear a ordem dos times antes de iniciar o draft.",
@@ -188,8 +203,8 @@ const Index = () => {
     (currentTeam.assignedTo === userId || currentTeam.assignedTo === localUserId)
   );
 
-  const [showStickyInfo, setShowStickyInfo] = useState(false);
-  
+  const assignedTeamsCount = draftState?.teams.filter(team => team.assignedTo).length || 0;
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -227,6 +242,7 @@ const Index = () => {
             onResetDraft={handleResetDraft}
             onPauseDraft={handlePauseDraft}
             onResumeDraft={handleResumeDraft}
+            teamsCount={assignedTeamsCount}
           />
         </div>
         
@@ -283,7 +299,7 @@ const Index = () => {
                   </h2>
                   <p className="text-gray-600 mb-6">
                     {userTeam ? `Você selecionou ${userTeam.name}. ` : ''}
-                    Este draft utiliza um formato snake com 9 times e 18 rodadas. Antes de começar, você precisa sortear a ordem do draft.
+                    Este draft utiliza um formato snake com {assignedTeamsCount > 0 ? assignedTeamsCount : 'múltiplos'} times e {draftState.settings.numberOfRounds} rodadas. Antes de começar, você precisa sortear a ordem do draft.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
@@ -296,7 +312,7 @@ const Index = () => {
                     <button
                       onClick={handleStartDraft}
                       className="button-transition focus-ring px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 flex items-center gap-2 shadow-md"
-                      disabled={draftState.teams.some(team => team.draftPosition === null)}
+                      disabled={assignedTeamsCount < 2 || draftState.teams.some(team => team.assignedTo && team.draftPosition === null)}
                     >
                       <Play size={18} />
                       Iniciar Draft

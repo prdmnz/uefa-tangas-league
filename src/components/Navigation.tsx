@@ -9,6 +9,7 @@ interface NavigationProps {
   onResetDraft: () => void;
   onPauseDraft: () => void;
   onResumeDraft: () => void;
+  teamsCount?: number;
 }
 
 const Navigation: React.FC<NavigationProps> = ({
@@ -16,7 +17,8 @@ const Navigation: React.FC<NavigationProps> = ({
   onStartDraft,
   onResetDraft,
   onPauseDraft,
-  onResumeDraft
+  onResumeDraft,
+  teamsCount = 0
 }) => {
   return (
     <header className="w-full glass shadow-soft mb-6 px-6 py-4 rounded-lg animate-fade-in border border-blue-100">
@@ -27,7 +29,7 @@ const Navigation: React.FC<NavigationProps> = ({
           </h1>
           
           <div className="ml-4 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            9 Times
+            {teamsCount > 0 ? `${teamsCount} Times` : 'Draft'}
           </div>
         </div>
         

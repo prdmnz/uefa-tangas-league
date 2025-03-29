@@ -134,14 +134,14 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
         </div>
       )}
       
-      {assignedTeams.length === validTeams.length && (
+      {assignedTeams.length >= 2 && (
         <div className="mt-7">
           <Button
             onClick={onStartDraft}
             className="w-full h-14 button-transition focus-ring px-4 py-3 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 shadow-lg hover:shadow-xl transition-all duration-300 animate-soft-pulse flex items-center justify-center gap-2"
           >
             <Trophy size={20} className="text-yellow-200" />
-            Todos os Times Selecionados - Iniciar Draft
+            Iniciar Draft com {assignedTeams.length} {assignedTeams.length === 1 ? 'Time' : 'Times'}
           </Button>
         </div>
       )}

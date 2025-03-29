@@ -1,4 +1,3 @@
-
 import { DraftPick, DraftSettings, DraftState, DraftStatus, Player, Team, TeamPlayer } from "../types";
 
 /**
@@ -8,14 +7,17 @@ export const generateDraftOrder = (teams: Team[], settings: DraftSettings): Draf
   const picks: DraftPick[] = [];
   const { numberOfRounds, snakeFormat } = settings;
   
+  // Filter only teams with draftPosition assigned
+  const teamsInDraft = teams.filter(team => team.draftPosition !== null && team.assignedTo);
+  
   for (let round = 1; round <= numberOfRounds; round++) {
     // In snake format, even rounds go in reverse order
     const roundTeams = snakeFormat && round % 2 === 0 
-      ? [...teams].sort((a, b) => (b.draftPosition || 0) - (a.draftPosition || 0))
-      : [...teams].sort((a, b) => (a.draftPosition || 0) - (b.draftPosition || 0));
+      ? [...teamsInDraft].sort((a, b) => (b.draftPosition || 0) - (a.draftPosition || 0))
+      : [...teamsInDraft].sort((a, b) => (a.draftPosition || 0) - (b.draftPosition || 0));
     
-    for (let pickInRound = 1; pickInRound <= teams.length; pickInRound++) {
-      const overall = (round - 1) * teams.length + pickInRound;
+    for (let pickInRound = 1; pickInRound <= roundTeams.length; pickInRound++) {
+      const overall = (round - 1) * roundTeams.length + pickInRound;
       const team = roundTeams[pickInRound - 1];
       
       picks.push({
@@ -35,19 +37,25 @@ export const generateDraftOrder = (teams: Team[], settings: DraftSettings): Draf
  * Randomizes the draft order for teams
  */
 export const randomizeDraftOrder = (teams: Team[]): Team[] => {
-  const shuffled = [...teams];
+  // Only include teams that have been assigned to a user
+  const teamsToRandomize = teams.filter(team => team.assignedTo);
+  const otherTeams = teams.filter(team => !team.assignedTo);
   
-  // Fisher-Yates shuffle
+  // Fisher-Yates shuffle for assigned teams
+  const shuffled = [...teamsToRandomize];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   
-  // Assign draft positions
-  return shuffled.map((team, index) => ({
+  // Assign draft positions to shuffled teams
+  const shuffledWithPositions = shuffled.map((team, index) => ({
     ...team,
     draftPosition: index + 1
   }));
+  
+  // Combine assigned teams with unassigned teams
+  return [...shuffledWithPositions, ...otherTeams];
 };
 
 /**
