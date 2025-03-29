@@ -9,7 +9,7 @@ interface RealTimeContextState {
   userId: string | null;
   draftState: DraftState | null;
   connectUser: (userId: string) => void;
-  selectTeam: (userId: string, teamId: string) => void;
+  selectTeam: (userName: string, teamId: string) => void;
   startDraft: (draftState: DraftState) => void;
   makePick: (pickIndex: number, playerId: string) => void;
   randomizeTeams: (teams: Team[]) => void;
@@ -467,11 +467,22 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const selectTeam = async (userId: string, teamId: string) => {
+  const selectTeam = async (userName: string, teamId: string) => {
     try {
+      if (!state.userId) {
+        toast({
+          title: 'Erro',
+          description: 'Você precisa estar conectado para selecionar um time.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      console.log(`Selecting team ${teamId} for user ${userName} (ID: ${state.userId})`);
+      
       const { error } = await supabase
         .from('teams')
-        .update({ assigned_to: userId })
+        .update({ assigned_to: userName })
         .eq('id', teamId);
       
       if (error) {
@@ -484,10 +495,27 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
       
+      // Update local state immediately for better user experience
+      if (state.draftState) {
+        const updatedTeams = state.draftState.teams.map(team => 
+          team.id === teamId ? { ...team, assignedTo: userName } : team
+        );
+        
+        dispatch({ 
+          type: 'SET_DRAFT_STATE', 
+          payload: {
+            ...state.draftState,
+            teams: updatedTeams
+          }
+        });
+      }
+      
       toast({
         title: 'Time Selecionado',
         description: `Você selecionou o time com ID ${teamId}`,
       });
+      
+      console.log(`Team ${teamId} successfully assigned to ${userName}`);
     } catch (error) {
       console.error('Erro ao selecionar time:', error);
     }

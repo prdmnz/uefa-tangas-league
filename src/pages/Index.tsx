@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DraftState, DraftStatus, Team, Player } from '../types';
 import { samplePlayers, sampleTeams, defaultDraftSettings } from '../data/players';
@@ -18,7 +17,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { FileText, Users, Trophy, Clock, AlertCircle, Play, Pause, RotateCcw } from 'lucide-react';
 
 const Index = () => {
-  // Use the realtime context
   const { 
     userId, 
     draftState, 
@@ -32,16 +30,10 @@ const Index = () => {
     randomizeTeams: randomizeTeamsRealTime
   } = useRealTime();
   
-  // Estado local para o upload de CSV
   const [showCsvUploader, setShowCsvUploader] = useState(false);
-  
-  // Calcular o tempo de início do pick atual
   const [currentPickStartTime, setCurrentPickStartTime] = useState<Date | undefined>(undefined);
-  
-  // Local user ID gerado aleatoriamente (para identificação do usuário)
   const [localUserId, setLocalUserId] = useState<string | null>(null);
-  
-  // Atualizar o tempo de início quando o pick atual mudar
+
   useEffect(() => {
     if (draftState && draftState.status === DraftStatus.IN_PROGRESS) {
       const currentPickObj = draftState.picks[draftState.currentPick];
@@ -55,9 +47,7 @@ const Index = () => {
     }
   }, [draftState?.currentPick, draftState?.status]);
 
-  // Inicializa o ID do usuário na montagem do componente se não existir
   useEffect(() => {
-    // Tenta obter ID existente do localStorage ou gera um novo
     const storedUserId = localStorage.getItem('draftAppUserId');
     const newUserId = storedUserId || uuidv4();
     
@@ -67,13 +57,11 @@ const Index = () => {
     
     setLocalUserId(newUserId);
     
-    // Conecta o usuário ao sistema de tempo real
     if (newUserId && !userId) {
       connectUser(newUserId);
     }
   }, [userId, connectUser]);
 
-  // Handle CSV players loaded
   const handlePlayersLoaded = (players: Player[]) => {
     setShowCsvUploader(false);
     
@@ -83,18 +71,14 @@ const Index = () => {
     });
   };
 
-  // Handle timer completion
   const handleTimerComplete = () => {
     toast({
       title: "Tempo esgotado!",
       description: "O tempo para escolha do time atual expirou.",
       variant: "destructive"
     });
-    
-    // Aqui poderia ter uma lógica para fazer um pick automático se o tempo esgotar
   };
 
-  // Handle player selection
   const handleSelectPlayer = (playerId: string) => {
     console.log("Attempting to select player:", playerId);
     console.log("User ID:", userId);
@@ -104,11 +88,11 @@ const Index = () => {
       toast({
         title: "Draft não ativo",
         description: "O draft precisa estar em andamento para fazer uma seleção.",
+        variant: "destructive"
       });
       return;
     }
 
-    // Check if user has permission to make this pick
     const currentTeam = draftState.currentPick < draftState.picks.length 
       ? draftState.picks[draftState.currentPick].team 
       : null;
@@ -120,42 +104,40 @@ const Index = () => {
     
     console.log("Current team on the clock:", currentTeam);
     console.log("Current team assigned to:", currentTeam.assignedTo);
+    console.log("Local user ID:", localUserId);
     
-    // Verifica se é a vez do usuário
-    if (currentTeam.assignedTo !== userId) {
+    const userTeam = draftState.teams.find(team => team.assignedTo === localUserId);
+    
+    if (currentTeam.assignedTo !== localUserId && currentTeam.assignedTo !== userTeam?.assignedTo) {
       toast({
         title: "Não é sua vez",
         description: "Você só pode escolher quando for sua vez.",
         variant: "destructive"
       });
-      console.log("Not user's turn. Current team assigned to:", currentTeam.assignedTo, "User ID:", userId);
+      console.log("Not user's turn. Current team assigned to:", currentTeam.assignedTo, "User ID/Name:", localUserId);
       return;
     }
 
-    // Usar a função do contexto
     console.log("Making pick:", draftState.currentPick, playerId);
     makePickRealTime(draftState.currentPick, playerId);
   };
 
-  // Handle draft randomization
   const handleRandomize = (randomizedTeams: Team[]) => {
-    // Essa função é usada apenas na animação local
-    // A sincronização real é feita no RandomizerButton
   };
 
-  // Handle team selection
   const handleTeamSelect = (userName: string, teamId: string) => {
+    console.log(`Team selection: User ${userName} selected team ${teamId}`);
+    
     if (localUserId) {
+      localStorage.setItem('draftAppUserName', userName);
       selectTeam(userName, teamId);
     }
   };
 
-  // Handle starting the draft
   const handleStartDraft = () => {
     if (!draftState) return;
     
     if (draftState.teams.some(team => team.draftPosition === null)) {
-      // Se os times não tiverem posições definidas, avise o usuário
       toast({
         title: "Times não sorteados",
         description: "Você precisa sortear a ordem dos times antes de iniciar o draft.",
@@ -164,10 +146,8 @@ const Index = () => {
       return;
     }
     
-    // Gera a ordem dos picks
     const picks = generateDraftOrder(draftState.teams, draftState.settings);
     
-    // Iniciar o draft usando a função do contexto
     const updatedDraftState: DraftState = {
       ...draftState,
       picks,
@@ -177,39 +157,37 @@ const Index = () => {
     
     startDraftRealTime(updatedDraftState);
     
-    // Definir o tempo de início do primeiro pick
     setCurrentPickStartTime(new Date());
   };
 
-  // Handle resetting the draft
   const handleResetDraft = () => {
     resetDraftRealTime();
     setCurrentPickStartTime(undefined);
   };
 
-  // Handle pausing the draft
   const handlePauseDraft = () => {
     pauseDraftRealTime();
   };
 
-  // Handle resuming the draft
   const handleResumeDraft = () => {
     resumeDraftRealTime();
     setCurrentPickStartTime(new Date());
   };
 
-  // Get current user's team
-  const userTeam = userId && draftState ? getUserTeam(draftState.teams, userId) : null;
+  const userTeam = draftState ? draftState.teams.find(team => 
+    team.assignedTo === userId || team.assignedTo === localUserId
+  ) : null;
 
-  // Extract current team on the clock
   const currentTeam = draftState && draftState.currentPick < draftState.picks.length 
     ? draftState.picks[draftState.currentPick].team 
     : null;
 
-  // Determine if it's the user's turn to draft
-  const isUserTurn = Boolean(userId && currentTeam && currentTeam.assignedTo === userId);
+  const isUserTurn = Boolean(
+    (userId || localUserId) && 
+    currentTeam && 
+    (currentTeam.assignedTo === userId || currentTeam.assignedTo === localUserId)
+  );
 
-  // Sticky current pick info
   const [showStickyInfo, setShowStickyInfo] = useState(false);
   
   useEffect(() => {
@@ -222,7 +200,6 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Draftboard should show immediately if we're in the middle of a draft
   const showDraftBoard = draftState && (
     draftState.status === DraftStatus.IN_PROGRESS || 
     draftState.status === DraftStatus.PAUSED ||
@@ -230,7 +207,6 @@ const Index = () => {
     (draftState.picks && draftState.picks.length > 0)
   );
 
-  // Log real-time state for debugging
   useEffect(() => {
     console.log("User ID:", userId);
     console.log("User team:", userTeam);
@@ -254,7 +230,6 @@ const Index = () => {
           />
         </div>
         
-        {/* Sticky current pick info */}
         {showStickyInfo && currentTeam && draftState?.status === DraftStatus.IN_PROGRESS && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 flex justify-between items-center shadow-md">
             <div className="flex items-center">
@@ -285,7 +260,6 @@ const Index = () => {
           </div>
         )}
         
-        {/* If user is not logged in or has not selected a team, show team selection */}
         {(!userTeam && draftState && draftState.status === DraftStatus.NOT_STARTED) && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <div className="lg:col-span-3">
@@ -298,7 +272,6 @@ const Index = () => {
           </div>
         )}
         
-        {/* If user is logged in, show draft interface */}
         {userId && draftState && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <div className="lg:col-span-2 space-y-6">

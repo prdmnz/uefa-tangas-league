@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 
 interface TeamSelectionProps {
   teams: Team[];
-  onTeamSelect: (userId: string, teamId: string) => void;
+  onTeamSelect: (userName: string, teamId: string) => void;
   onStartDraft: () => void;
 }
 

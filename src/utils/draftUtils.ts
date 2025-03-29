@@ -1,3 +1,4 @@
+
 import { DraftPick, DraftSettings, DraftState, DraftStatus, Player, Team, TeamPlayer } from "../types";
 
 /**
@@ -246,5 +247,26 @@ export const assignTeamToUser = (teams: Team[], userId: string, teamId: string):
  * Get the user's assigned team
  */
 export const getUserTeam = (teams: Team[], userId: string): Team | undefined => {
+  if (!userId) return undefined;
   return teams.find(team => team.assignedTo === userId);
+};
+
+/**
+ * Check if it's the user's turn to draft
+ */
+export const isUserTurn = (draftState: DraftState, userId: string): boolean => {
+  if (!userId || !draftState || draftState.status !== DraftStatus.IN_PROGRESS) {
+    return false;
+  }
+
+  // If current pick is past the end of the draft, return false
+  if (draftState.currentPick >= draftState.picks.length) {
+    return false;
+  }
+
+  // Get the current team on the clock
+  const currentTeam = draftState.picks[draftState.currentPick].team;
+  
+  // Check if the current team is assigned to the current user
+  return currentTeam.assignedTo === userId;
 };
