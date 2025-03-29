@@ -33,6 +33,7 @@ const Index = () => {
   const [showCsvUploader, setShowCsvUploader] = useState(false);
   const [currentPickStartTime, setCurrentPickStartTime] = useState<Date | undefined>(undefined);
   const [localUserId, setLocalUserId] = useState<string | null>(null);
+  const [showStickyInfo, setShowStickyInfo] = useState(false);
 
   useEffect(() => {
     if (draftState && draftState.status === DraftStatus.IN_PROGRESS) {
