@@ -22,7 +22,6 @@ interface RealTimeContextState {
 
 const RealTimeContext = createContext<RealTimeContextState | undefined>(undefined);
 
-// Reducer to manage shared state
 type RealTimeAction =
   | { type: 'SET_CONNECTED'; payload: boolean }
   | { type: 'SET_USER_ID'; payload: string | null }
@@ -495,7 +494,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
       
-      // Update local state immediately for better user experience
       if (state.draftState) {
         const updatedTeams = state.draftState.teams.map(team => 
           team.id === teamId ? { ...team, assignedTo: userName } : team
@@ -719,7 +717,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return;
         }
         
-        // Update with custom config if provided
         const numberOfTeams = customConfig?.numberOfTeams;
         await supabase
           .from('draft_state')
@@ -731,7 +728,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           })
           .eq('id', data.id);
       } else {
-        // Update with custom config if provided
         const numberOfTeams = customConfig?.numberOfTeams;
         await supabase
           .from('draft_state')
@@ -747,7 +743,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await supabase.from('draft_picks').delete().neq('id', 'placeholder');
       
       if (customConfig?.numberOfTeams) {
-        // If we're changing the number of teams, we need to update the teams table
         const { data: teamsData } = await supabase
           .from('teams')
           .select('*')
@@ -757,7 +752,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (teamsData) {
           const teamIds = teamsData.map(team => team.id);
           
-          // Reset all teams first
           await supabase
             .from('teams')
             .update({ 
@@ -765,8 +759,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               assigned_to: null
             });
             
-          // Then update the active teams for the draft
-          // This way we ensure only the first N teams are used
           await supabase
             .from('teams')
             .update({
@@ -782,7 +774,6 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             .not('id', 'in', teamIds);
         }
       } else {
-        // Just reset all teams
         await supabase
           .from('teams')
           .update({ 
