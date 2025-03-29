@@ -4,6 +4,13 @@ import { Team } from '../types';
 import { toast } from '@/hooks/use-toast';
 import { UserPlus, Users, Check, Trophy, ShieldAlert } from 'lucide-react';
 import { Button } from './ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TeamSelectionProps {
   teams: Team[];
@@ -83,19 +90,18 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ teams, onTeamSelect, onSt
             <ShieldAlert size={16} className="text-blue-600" />
             Selecione o Time
           </label>
-          <select
-            id="teamSelect"
-            value={selectedTeam}
-            onChange={(e) => setSelectedTeam(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-colors shadow-sm"
-          >
-            <option value="">Selecione um time</option>
-            {availableTeams.map(team => (
-              <option key={team.id} value={team.id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+            <SelectTrigger className="w-full px-4 py-2.5 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-colors shadow-sm">
+              <SelectValue placeholder="Selecione um time" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTeams.map(team => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <Button
