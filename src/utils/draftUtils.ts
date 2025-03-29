@@ -275,6 +275,12 @@ export const isUserTurn = (draftState: DraftState, userId: string): boolean => {
   // Get the current team on the clock
   const currentTeam = draftState.picks[draftState.currentPick].team;
   
-  // Check if the current team is assigned to the current user
-  return currentTeam.assignedTo === userId;
+  // Get the user's team
+  const userTeam = draftState.teams.find(team => team.assignedTo === userId);
+  
+  // Check if it's the user's turn:
+  // 1. If the current team is directly assigned to the user OR
+  // 2. If the user's team is the team that's on the clock
+  return currentTeam.assignedTo === userId || 
+         (userTeam !== undefined && currentTeam.assignedTo === userTeam.assignedTo);
 };

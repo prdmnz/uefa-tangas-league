@@ -83,6 +83,7 @@ const Index = () => {
   const handleSelectPlayer = (playerId: string) => {
     console.log("Attempting to select player:", playerId);
     console.log("User ID:", userId);
+    console.log("Local User ID:", localUserId);
     console.log("Draft status:", draftState?.status);
     
     if (!draftState || draftState.status !== DraftStatus.IN_PROGRESS) {
@@ -105,17 +106,26 @@ const Index = () => {
     
     console.log("Current team on the clock:", currentTeam);
     console.log("Current team assigned to:", currentTeam.assignedTo);
-    console.log("Local user ID:", localUserId);
     
-    const userTeam = draftState.teams.find(team => team.assignedTo === localUserId);
+    const userTeam = draftState.teams.find(team => 
+      team.assignedTo === userId || team.assignedTo === localUserId
+    );
     
-    if (currentTeam.assignedTo !== localUserId && currentTeam.assignedTo !== userTeam?.assignedTo) {
+    console.log("User's team:", userTeam);
+    
+    const isUserTurn = 
+      currentTeam.assignedTo === userId || 
+      currentTeam.assignedTo === localUserId || 
+      (userTeam && currentTeam.assignedTo === userTeam.assignedTo);
+    
+    console.log("Is user's turn determined as:", isUserTurn);
+    
+    if (!isUserTurn) {
       toast({
         title: "Não é sua vez",
         description: "Você só pode escolher quando for sua vez.",
         variant: "destructive"
       });
-      console.log("Not user's turn. Current team assigned to:", currentTeam.assignedTo, "User ID/Name:", localUserId);
       return;
     }
 
@@ -199,9 +209,12 @@ const Index = () => {
     : null;
 
   const isUserTurn = Boolean(
-    (userId || localUserId) && 
     currentTeam && 
-    (currentTeam.assignedTo === userId || currentTeam.assignedTo === localUserId)
+    (
+      currentTeam.assignedTo === userId || 
+      currentTeam.assignedTo === localUserId ||
+      (userTeam && currentTeam.assignedTo === userTeam.assignedTo)
+    )
   );
 
   const assignedTeamsCount = draftState?.teams.filter(team => team.assignedTo).length || 0;
