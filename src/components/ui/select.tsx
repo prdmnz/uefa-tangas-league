@@ -114,11 +114,11 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  // Ensure value is never an empty string
+  // Ensure value is never an empty string by providing a default value if needed
   const safeProps = {
     ...props,
     value: props.value && typeof props.value === 'string' && props.value.trim() === '' 
-      ? `item-${Math.random().toString(36).substr(2, 9)}` 
+      ? `item-${Math.random().toString(36).substr(2, 9)}` // Generate a random value
       : props.value
   };
 
