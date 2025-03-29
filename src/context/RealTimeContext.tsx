@@ -770,14 +770,14 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           await supabase
             .from('teams')
             .update({
-              is_active: true
+              assigned_to: null
             })
             .in('id', teamIds);
             
           await supabase
             .from('teams')
             .update({
-              is_active: false
+              assigned_to: null
             })
             .not('id', 'in', teamIds);
         }
