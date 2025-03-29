@@ -5,6 +5,7 @@ import { Team } from '../types';
 import { useRealTime } from '../context/RealTimeContext';
 import { toast } from '@/hooks/use-toast';
 import { Trophy, Dices, Sparkles } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface RandomizerButtonProps {
   teams: Team[];
@@ -66,16 +67,16 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
   };
 
   return (
-    <button
+    <Button
       onClick={handleRandomize}
       disabled={disabled}
+      variant="default"
       className={`
         relative overflow-hidden button-transition focus-ring
         px-4 py-2.5 rounded-lg font-medium text-white
         flex items-center justify-center gap-2 min-w-44
-        ${disabled 
-          ? 'bg-gray-400 cursor-not-allowed' 
-          : 'bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:from-amber-700 active:to-amber-800 shadow-md hover:shadow-lg'}
+        bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 
+        active:from-amber-700 active:to-amber-800 shadow-md hover:shadow-lg
         ${isAnimating ? 'shimmer' : ''}
       `}
     >
@@ -91,7 +92,7 @@ const RandomizerButton: React.FC<RandomizerButtonProps> = ({ teams, onRandomize,
           Sortear Ordem do Draft
         </>
       )}
-    </button>
+    </Button>
   );
 };
 

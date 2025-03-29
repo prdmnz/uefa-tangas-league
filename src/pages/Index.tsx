@@ -38,6 +38,9 @@ const Index = () => {
   // Calcular o tempo de início do pick atual
   const [currentPickStartTime, setCurrentPickStartTime] = useState<Date | undefined>(undefined);
   
+  // Local user ID gerado aleatoriamente (para identificação do usuário)
+  const [localUserId, setLocalUserId] = useState<string | null>(null);
+  
   // Atualizar o tempo de início quando o pick atual mudar
   useEffect(() => {
     if (draftState && draftState.status === DraftStatus.IN_PROGRESS) {
@@ -51,9 +54,6 @@ const Index = () => {
       setCurrentPickStartTime(undefined);
     }
   }, [draftState?.currentPick, draftState?.status]);
-  
-  // Local user ID gerado aleatoriamente (para identificação do usuário)
-  const [localUserId, setLocalUserId] = useState<string | null>(null);
 
   // Inicializa o ID do usuário na montagem do componente se não existir
   useEffect(() => {
@@ -96,6 +96,10 @@ const Index = () => {
 
   // Handle player selection
   const handleSelectPlayer = (playerId: string) => {
+    console.log("Attempting to select player:", playerId);
+    console.log("User ID:", userId);
+    console.log("Draft status:", draftState?.status);
+    
     if (!draftState || draftState.status !== DraftStatus.IN_PROGRESS) {
       toast({
         title: "Draft não ativo",
@@ -109,16 +113,27 @@ const Index = () => {
       ? draftState.picks[draftState.currentPick].team 
       : null;
       
-    if (currentTeam && currentTeam.assignedTo !== userId) {
+    if (!currentTeam) {
+      console.error("No current team found for pick:", draftState.currentPick);
+      return;
+    }
+    
+    console.log("Current team on the clock:", currentTeam);
+    console.log("Current team assigned to:", currentTeam.assignedTo);
+    
+    // Verifica se é a vez do usuário
+    if (currentTeam.assignedTo !== userId) {
       toast({
         title: "Não é sua vez",
         description: "Você só pode escolher quando for sua vez.",
         variant: "destructive"
       });
+      console.log("Not user's turn. Current team assigned to:", currentTeam.assignedTo, "User ID:", userId);
       return;
     }
 
     // Usar a função do contexto
+    console.log("Making pick:", draftState.currentPick, playerId);
     makePickRealTime(draftState.currentPick, playerId);
   };
 
@@ -191,6 +206,9 @@ const Index = () => {
     ? draftState.picks[draftState.currentPick].team 
     : null;
 
+  // Determine if it's the user's turn to draft
+  const isUserTurn = Boolean(userId && currentTeam && currentTeam.assignedTo === userId);
+
   // Sticky current pick info
   const [showStickyInfo, setShowStickyInfo] = useState(false);
   
@@ -211,6 +229,15 @@ const Index = () => {
     draftState.status === DraftStatus.COMPLETED ||
     (draftState.picks && draftState.picks.length > 0)
   );
+
+  // Log real-time state for debugging
+  useEffect(() => {
+    console.log("User ID:", userId);
+    console.log("User team:", userTeam);
+    console.log("Current team:", currentTeam);
+    console.log("Is user's turn:", isUserTurn);
+    console.log("Draft state:", draftState);
+  }, [userId, userTeam, currentTeam, draftState]);
 
   return (
     <div className="min-h-screen">
@@ -237,7 +264,7 @@ const Index = () => {
                 Pick: {draftState.currentPick + 1} de {draftState.picks.length}
               </span>
               
-              {userTeam && currentTeam.id === userTeam.id && (
+              {isUserTurn && (
                 <span className="ml-4 bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse flex items-center gap-1">
                   <AlertCircle size={12} />
                   É a sua vez!
@@ -341,8 +368,8 @@ const Index = () => {
                 <PlayerList
                   players={draftState.availablePlayers}
                   onSelectPlayer={handleSelectPlayer}
-                  disabled={draftState.status !== DraftStatus.IN_PROGRESS || 
-                            (currentTeam && currentTeam.assignedTo !== userId)}
+                  disabled={draftState.status !== DraftStatus.IN_PROGRESS}
+                  isUserTurn={isUserTurn}
                 />
               )}
             </div>
@@ -362,7 +389,7 @@ const Index = () => {
                     Pick: {draftState.currentPick + 1} de {draftState.picks.length}
                   </div>
                   
-                  {userTeam && currentTeam.id === userTeam.id && (
+                  {isUserTurn && (
                     <div className="mt-3 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium border border-yellow-200 flex items-center gap-2">
                       <AlertCircle size={16} />
                       É a sua vez de escolher um jogador!
