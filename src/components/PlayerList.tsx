@@ -11,9 +11,18 @@ interface PlayerListProps {
   onSelectPlayer: (playerId: string) => void;
   disabled: boolean;
   isUserTurn: boolean;
+  currentTeamName?: string; // Added prop for current team name
+  userTeamName?: string; // Added prop for user's team name
 }
 
-const PlayerList: React.FC<PlayerListProps> = ({ players, onSelectPlayer, disabled, isUserTurn }) => {
+const PlayerList: React.FC<PlayerListProps> = ({ 
+  players, 
+  onSelectPlayer, 
+  disabled, 
+  isUserTurn,
+  currentTeamName,
+  userTeamName 
+}) => {
   const [search, setSearch] = useState("");
   const [positionFilter, setPositionFilter] = useState("");
   const [teamFilter, setTeamFilter] = useState("");
@@ -56,10 +65,36 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, onSelectPlayer, disabl
     setExpandedPlayer(expandedPlayer === playerId ? null : playerId);
   };
 
+  // Function to determine if selection is allowed
+  const canSelectPlayer = () => {
+    if (disabled) return false;
+    
+    // If these are equal, it means it's the user's turn (either directly assigned or via coach name)
+    const isSameTeamOrCoach = currentTeamName === userTeamName;
+    return isSameTeamOrCoach;
+  };
+
+  const isSelectionAllowed = canSelectPlayer();
+
   return (
     <div className="glass shadow-xl rounded-lg overflow-hidden animate-fade-in border border-blue-100">
       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 border-b border-blue-200">
         <h2 className="text-xl font-semibold mb-4 text-blue-800">Jogadores Disponíveis</h2>
+
+        {/* Current turn info banner */}
+        {currentTeamName && (
+          <div className={`mb-4 p-3 rounded-lg ${isSelectionAllowed ? 'bg-green-100 border border-green-200' : 'bg-blue-100 border border-blue-200'}`}>
+            <p className="text-sm">
+              <span className="font-medium">Time na vez: </span>
+              <span className={`${isSelectionAllowed ? 'text-green-700 font-bold' : 'text-blue-700'}`}>
+                {currentTeamName}
+              </span>
+              {isSelectionAllowed && (
+                <span className="ml-2 text-green-700 font-medium"> (É a sua vez!)</span>
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
@@ -203,12 +238,12 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, onSelectPlayer, disabl
                           </Button>
                           <Button
                             size="sm"
-                            className={`text-xs h-8 ${!isUserTurn && "opacity-70"}`}
-                            variant={disabled || !isUserTurn ? "outline" : "default"}
-                            onClick={() => !disabled && isUserTurn && onSelectPlayer(player.id)}
-                            disabled={disabled || !isUserTurn}
+                            className={`text-xs h-8 ${!isSelectionAllowed && "opacity-70"}`}
+                            variant={isSelectionAllowed ? "default" : "outline"}
+                            onClick={() => isSelectionAllowed && onSelectPlayer(player.id)}
+                            disabled={!isSelectionAllowed}
                           >
-                            {isUserTurn ? "Selecionar" : "Não é sua vez"}
+                            {isSelectionAllowed ? "Selecionar" : "Aguarde sua vez"}
                           </Button>
                         </div>
                       </td>

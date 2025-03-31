@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DraftState, DraftStatus, Team, Player } from '../types';
 import { samplePlayers, sampleTeams, defaultDraftSettings } from '../data/players';
@@ -373,6 +374,8 @@ const Index = () => {
                   onSelectPlayer={handleSelectPlayer}
                   disabled={draftState.status !== DraftStatus.IN_PROGRESS}
                   isUserTurn={isUserTurn}
+                  currentTeamName={currentTeam?.name}
+                  userTeamName={userTeam?.name}
                 />
               )}
             </div>
